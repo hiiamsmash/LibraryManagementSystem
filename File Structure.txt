@@ -560,3 +560,372 @@ Deposit: POST /api/accounts/{accountId}/deposit with amount.
 Withdraw: POST /api/accounts/{accountId}/withdraw with amount.
 
 View Balance: GET /api/accounts/{accountId}/balance.
+
+
+
+
+
+
+
+
+
+
+
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+
+
+
+// File: src/main/java/com/intern/bank/BankApplication.java
+package com.intern.bank;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
+}
+
+// File: src/main/java/com/intern/bank/model/Customer.java
+package com.intern.bank.model;
+
+import jakarta.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+    private String phone;
+    private String address;
+
+    @Temporal(TemporalType.DATE)
+    private Date dob;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public Date getDob() { return dob; }
+    public void setDob(Date dob) { this.dob = dob; }
+}
+
+// File: src/main/java/com/intern/bank/model/Account.java
+package com.intern.bank.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT")
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    private String accountType;
+    private double balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+    public String getAccountType() { return accountType; }
+    public void setAccountType(String accountType) { this.accountType = accountType; }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+}
+
+// File: src/main/java/com/intern/bank/model/Transaction.java
+package com.intern.bank.model;
+
+import jakarta.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    private String transactionType;
+    private double amount;
+
+    @Temporal(TemporalType.DATE)
+    private Date transactionDate;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
+    public Date getTransactionDate() { return transactionDate; }
+    public void setTransactionDate(Date transactionDate) { this.transactionDate = transactionDate; }
+}
+
+// File: src/main/java/com/intern/bank/model/UserLogin.java
+package com.intern.bank.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "INTERN_USER_LOGIN")
+public class UserLogin {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String username;
+    private String password;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+// File: src/main/java/com/intern/bank/repository/AccountRepository.java
+package com.intern.bank.repository;
+
+import com.intern.bank.model.Account;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AccountRepository extends JpaRepository<Account, Long> {
+}
+
+// File: src/main/java/com/intern/bank/repository/CustomerRepository.java
+package com.intern.bank.repository;
+
+import com.intern.bank.model.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
+}
+
+// File: src/main/java/com/intern/bank/repository/TransactionRepository.java
+package com.intern.bank.repository;
+
+import com.intern.bank.model.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+}
+
+// File: src/main/java/com/intern/bank/repository/UserLoginRepository.java
+package com.intern.bank.repository;
+
+import com.intern.bank.model.UserLogin;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
+    UserLogin findByUsername(String username);
+}
+
+// File: src/main/java/com/intern/bank/service/AccountService.java
+package com.intern.bank.service;
+
+import com.intern.bank.model.Account;
+import com.intern.bank.repository.AccountRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AccountService {
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    public Account getAccountById(Long id) {
+        return accountRepository.findById(id).orElse(null);
+    }
+
+    public Account updateAccount(Account account) {
+        return accountRepository.save(account);
+    }
+}
+
+// File: src/main/java/com/intern/bank/service/AuthService.java
+package com.intern.bank.service;
+
+import com.intern.bank.model.UserLogin;
+import com.intern.bank.repository.UserLoginRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+
+    @Autowired
+    private UserLoginRepository userLoginRepository;
+
+    public boolean authenticateUser(String username, String password) {
+        UserLogin user = userLoginRepository.findByUsername(username);
+        return user != null && user.getPassword().equals(password);
+    }
+}
+
+// File: src/main/java/com/intern/bank/service/TransactionService.java
+package com.intern.bank.service;
+
+import com.intern.bank.model.Account;
+import com.intern.bank.model.Transaction;
+import com.intern.bank.repository.AccountRepository;
+import com.intern.bank.repository.TransactionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+
+@Service
+public class TransactionService {
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    public Transaction deposit(Long accountId, double amount) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account != null) {
+            account.setBalance(account.getBalance() + amount);
+            accountRepository.save(account);
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setTransactionType("DEPOSIT");
+            transaction.setAmount(amount);
+            transaction.setTransactionDate(new Date());
+
+            return transactionRepository.save(transaction);
+        }
+        return null;
+    }
+
+    public Transaction withdraw(Long accountId, double amount) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account != null && account.getBalance() >= amount) {
+            account.setBalance(account.getBalance() - amount);
+            accountRepository.save(account);
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setTransactionType("WITHDRAW");
+            transaction.setAmount(amount);
+            transaction.setTransactionDate(new Date());
+
+            return transactionRepository.save(transaction);
+        }
+        return null;
+    }
+}
+
+// File: src/main/java/com/intern/bank/controller/LoginRequest.java
+package com.intern.bank.controller;
+
+public class LoginRequest {
+
+    private String username;
+    private String password;
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+// File: src/main/java/com/intern/bank/controller/AccountController.java
+package com.intern.bank.controller;
+
+import com.intern.bank.model.Account;
+import com.intern.bank.service.AccountService;
+import com.intern.bank.service.TransactionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/accounts")
+public class AccountController {
+
+    @Autowired
+    private AccountService accountService;
+
+    @Autowired
+    private TransactionService transactionService;
+
+    @GetMapping("/{id}/balance")
+    public ResponseEntity<Double> getBalance(@PathVariable Long id) {
+        Account account = accountService.getAccountById(id);
+        if (account != null) {
+            return ResponseEntity.ok(account.getBalance());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/deposit")
+    public ResponseEntity<?> deposit(@PathVariable Long id, @RequestBody Double amount) {
+        return ResponseEntity.ok(transactionService.deposit(id, amount));
+    }
+
+    @PostMapping("/{id}/withdraw")
+    public ResponseEntity<?> withdraw(@PathVariable Long id, @RequestBody Double amount) {
+        return ResponseEntity.ok(transactionService.withdraw(id, amount));
+    }
+}
+
+// File: src/main/java/com/intern/bank/controller/AuthController.java
+package com.intern.bank.controller;
+
+import com.intern.bank.controller.LoginRequest;
+import com.intern.bank.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+        boolean isAuthenticated = authService.authenticateUser(loginRequest.getUsername(), loginRequest.getPassword());
+        if (isAuthenticated) {
+            return ResponseEntity.ok("Login successful!");
+        }
+        return ResponseEntity.status(401).body("Invalid credentials");
+    }
+}
