@@ -1,0 +1,40 @@
+1. Insert Data into INTERN_CUSTOMER
+sql
+Copy
+Edit
+INSERT INTO INTERN_CUSTOMER (ID, NAME, EMAIL, PHONE, ADDRESS, DOB) VALUES
+(1, 'Rahul Kumar', 'rahul.kumar@example.com', '9876543210', '123 MG Road, Bangalore, Karnataka', TO_DATE('1985-06-15', 'YYYY-MM-DD')),
+(2, 'Priya Sharma', 'priya.sharma@example.com', '8765432109', '456 Park Street, Mumbai, Maharashtra', TO_DATE('1990-09-25', 'YYYY-MM-DD')),
+(3, 'Amit Yadav', 'amit.yadav@example.com', '8001122334', '789 Nehru Nagar, Delhi', TO_DATE('1982-01-10', 'YYYY-MM-DD')),
+(4, 'Sunita Verma', 'sunita.verma@example.com', '9900112233', '1018 Lajpat Nagar, Chennai, Tamil Nadu', TO_DATE('1993-11-30', 'YYYY-MM-DD')),
+(5, 'Vijay Reddy', 'vijay.reddy@example.com', '8112233445', '2020 Jubilee Hills, Hyderabad, Telangana', TO_DATE('1988-07-10', 'YYYY-MM-DD'));
+2. Insert Data into INTERN_ACCOUNT
+sql
+Copy
+Edit
+INSERT INTO INTERN_ACCOUNT (ID, CUSTOMER_ID, ACCOUNT_TYPE, BALANCE) VALUES
+(1, 1, 'SAVINGS', 50000.00),
+(2, 2, 'CHECKING', 25000.00),
+(3, 3, 'SAVINGS', 15000.00),
+(4, 4, 'CHECKING', 12000.00),
+(5, 5, 'SAVINGS', 60000.00);
+3. Insert Data into INTERN_BANK_TRANSACTION
+sql
+Copy
+Edit
+INSERT INTO INTERN_BANK_TRANSACTION (ID, ACCOUNT_ID, TRANSACTION_TYPE, AMOUNT, TRANSACTION_DATE) VALUES
+(1, 1, 'DEPOSIT', 15000.00, TO_DATE('2025-04-05', 'YYYY-MM-DD')),
+(2, 2, 'WITHDRAW', 5000.00, TO_DATE('2025-04-06', 'YYYY-MM-DD')),
+(3, 3, 'DEPOSIT', 8000.00, TO_DATE('2025-04-07', 'YYYY-MM-DD')),
+(4, 4, 'WITHDRAW', 2000.00, TO_DATE('2025-04-08', 'YYYY-MM-DD')),
+(5, 5, 'DEPOSIT', 10000.00, TO_DATE('2025-04-09', 'YYYY-MM-DD'));
+4. Insert Data into INTERN_USER_LOGIN
+sql
+Copy
+Edit
+INSERT INTO INTERN_USER_LOGIN (ID, USERNAME, PASSWORD) VALUES
+(1, 'rahulkumar', 'password123'),
+(2, 'priyasharma', 'password456'),
+(3, 'amityadav', 'password789'),
+(4, 'sunitaverma', 'password101'),
+(5, 'vijayreddy', 'password112');
