@@ -1,3 +1,42 @@
+bank/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/
+        │   └── com/
+        │       └── intern/
+        │           └── bank/
+        │               ├── BankApplication.java
+        │               ├── controller/
+        │               │   ├── AccountController.java
+        │               │   ├── AuthController.java
+        │               │   └── LoginRequest.java
+        │               ├── exception/
+        │               │   └── CustomException.java
+        │               ├── model/
+        │               │   ├── Account.java
+        │               │   ├── Customer.java
+        │               │   ├── Transaction.java
+        │               │   └── UserLogin.java
+        │               ├── repository/
+        │               │   ├── AccountRepository.java
+        │               │   ├── CustomerRepository.java
+        │               │   ├── TransactionRepository.java
+        │               │   └── UserLoginRepository.java
+        │               └── service/
+        │                   ├── AccountService.java
+        │                   ├── AuthService.java
+        │                   └── TransactionService.java
+        └── resources/
+            └── application.properties
+
+
+
+
+
+
+
+
 3. pom.xml
 xml
 Copy
@@ -607,3 +646,133 @@ public class AccountController {
     }
 }
 </details>
+
+
+
+Testing 
+
+1. (Optional) Authentication
+We’re not enforcing tokens, but you can still verify register/login work.
+
+Register
+
+Method: POST
+
+URL: {{base_url}}/auth/register
+
+Headers: Content-Type: application/json
+
+Body (raw JSON):
+
+json
+Copy
+Edit
+{
+  "username": "alice",
+  "password": "secret123"
+}
+Login
+
+Method: POST
+
+URL: {{base_url}}/auth/login
+
+Headers: Content-Type: application/json
+
+Body: same as above
+
+2. Customer Operations
+2.1 Create Customer
+Method: POST
+
+URL: {{base_url}}/customers
+
+Headers: Content-Type: application/json
+
+Body:
+
+json
+Copy
+Edit
+{
+  "name": "Alice Smith",
+  "email": "alice@example.com",
+  "phone": "555-1234",
+  "address": "123 Main St",
+  "dob": "1990-01-01"
+}
+What to do in Postman:
+
+New request → POST → paste URL.
+
+Under Body → select raw + JSON.
+
+Paste JSON, Send.
+
+In Tests tab you can pm.environment.set("customerId", pm.response.json().id); to capture the returned id.
+
+2.2 Get Customer by ID
+Method: GET
+
+URL: {{base_url}}/customers/{{customerId}}
+
+No body required.
+
+2.3 List All Customers
+Method: GET
+
+URL: {{base_url}}/customers
+
+3. Account Operations
+3.1 Create Account for a Customer
+Method: POST
+
+URL: {{base_url}}/customers/{{customerId}}/accounts
+
+Headers: Content-Type: application/json
+
+Body:
+
+json
+Copy
+Edit
+{
+  "accountType": "SAVINGS",
+  "balance": 1000.00
+}
+In Postman: capture the returned accountId via a Tests script.
+
+3.2 Get Account by ID
+Method: GET
+
+URL: {{base_url}}/accounts/{{accountId}}
+
+3.3 List Accounts for a Customer
+Method: GET
+
+URL: {{base_url}}/customers/{{customerId}}/accounts
+
+4. Transaction Operations
+Deposit and withdraw use query parameters; transfer takes three query params; list uses path.
+
+4.1 Deposit
+Method: POST
+
+URL: {{base_url}}/accounts/{{accountId}}/deposit?amount=250.00
+
+4.2 Withdraw
+Method: POST
+
+URL: {{base_url}}/accounts/{{accountId}}/withdraw?amount=100.00
+
+4.3 Transfer
+Method: POST
+
+URL: {{base_url}}/accounts/transfer?from={{accountId}}&to={{accountId2}}&amount=50.00
+
+Prerequisite: you must have a second account ID stored in {{accountId2}}.
+
+4.4 List Transactions for an Account
+Method: GET
+
+URL: {{base_url}}/accounts/{{accountId}}/transactions
