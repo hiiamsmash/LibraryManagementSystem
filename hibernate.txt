@@ -1,0 +1,291 @@
+Hibernate Complete Notes
+________________________________________
+1. Introduction to Hibernate
+Hibernate is an ORM (Object Relational Mapping) framework that maps Java classes to database tables.
+It simplifies database programming by hiding the complexities of SQL behind an object-oriented interface.
+________________________________________
+Key Features:
+•	Lightweight and Open Source
+•	Database Independent (can switch databases easily)
+•	Automatic Table Creation
+•	Caching Support
+•	Transaction Management
+•	HQL (Hibernate Query Language)
+________________________________________
+Why Use Hibernate?
+•	Reduces development time
+•	No need to write complex SQL queries
+•	Better productivity and cleaner code
+________________________________________
+Simple Example:
+A Java Object:
+public class Student {
+    private int id;
+    private String name;
+}
+Automatically mapped to a Database Table:
+id	name
+1	John
+________________________________________
+2. Hibernate Architecture
+Hibernate follows a layered architecture:
+Application
+    |
+Hibernate (Configuration, SessionFactory, Session, Transaction, Query)
+    |
+Database
+________________________________________
+Hibernate Core Components
+Component	Description
+Configuration	Reads Hibernate configuration file
+SessionFactory	Provides Sessions
+Session	Performs CRUD operations
+Transaction	Controls commit/rollback
+Query	Executes HQL
+________________________________________
+Detailed Explanation:
+•	Configuration: Loads settings (hibernate.cfg.xml).
+•	SessionFactory: A heavy object, used once per application.
+•	Session: A lightweight, short-lived object.
+•	Transaction: Used to ensure data integrity.
+________________________________________
+Example:
+Configuration cfg = new Configuration();
+cfg.configure("hibernate.cfg.xml");
+
+SessionFactory factory = cfg.buildSessionFactory();
+Session session = factory.openSession();
+Transaction tx = session.beginTransaction();
+________________________________________
+3. Hibernate Life Cycle
+There are three main states:
+State	Description
+Transient	Object not associated with Session
+Persistent	Object associated with Session
+Detached	Object once associated, now disconnected
+________________________________________
+Example:
+Student s = new Student(); // Transient
+
+Session session = factory.openSession();
+session.save(s);           // Persistent
+
+session.close();           // Detached
+________________________________________
+4. Hibernate Configuration (In-depth)
+Hibernate requires configuration to connect to the database.
+________________________________________
+Configuration Files:
+•	hibernate.cfg.xml (most common)
+•	hibernate.properties
+________________________________________
+Example hibernate.cfg.xml:
+<hibernate-configuration>
+ <session-factory>
+   <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+   <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/testdb</property>
+   <property name="hibernate.connection.username">root</property>
+   <property name="hibernate.connection.password">root</property>
+   <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+   <mapping class="com.model.Student"/>
+ </session-factory>
+</hibernate-configuration>
+________________________________________
+5. Hibernate Mapping
+Mapping means relating Java classes to Database tables.
+________________________________________
+5.1 XML Based Mapping
+<class name="Student" table="STUDENT">
+   <id name="id" column="ID" />
+   <property name="name" column="NAME" />
+</class>
+________________________________________
+5.2 Annotation Based Mapping
+@Entity
+@Table(name = "STUDENT")
+public class Student {
+    @Id
+    @GeneratedValue
+    private int id;
+
+    @Column(name = "NAME")
+    private String name;
+}
+________________________________________
+6. Hibernate Annotations (Detailed)
+Annotation	Purpose
+@Entity	Declares class as an entity
+@Id	Marks field as primary key
+@GeneratedValue	Auto-increment primary key
+@Column	Maps field to database column
+@Table	Maps class to database table
+________________________________________
+More Examples:
+@Entity
+@Table(name = "Employee")
+public class Employee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int empId;
+
+    @Column(name = "emp_name")
+    private String name;
+}
+________________________________________
+7. Hibernate CRUD Operations (Expanded)
+7.1 Insert (Create)
+Session session = factory.openSession();
+Transaction tx = session.beginTransaction();
+
+Student s = new Student();
+s.setName("Mark");
+
+session.save(s);
+tx.commit();
+________________________________________
+7.2 Read (Retrieve)
+Student s = session.get(Student.class, 1);
+System.out.println(s.getName());
+________________________________________
+7.3 Update
+Student s = session.get(Student.class, 1);
+s.setName("Mike");
+
+session.update(s);
+tx.commit();
+________________________________________
+7.4 Delete
+Student s = session.get(Student.class, 1);
+session.delete(s);
+tx.commit();
+________________________________________
+8. Hibernate Query Language (HQL)
+HQL works with entity names, not table names.
+________________________________________
+Examples:
+Fetch all students:
+Query<Student> query = session.createQuery("from Student");
+List<Student> list = query.list();
+________________________________________
+Fetch with condition:
+Query<Student> query = session.createQuery("from Student where name = :name");
+query.setParameter("name", "Mark");
+Student s = query.uniqueResult();
+________________________________________
+Important Points:
+•	Case-insensitive
+•	No need to specify database column names
+•	Object-oriented
+________________________________________
+9. Hibernate Relationships (Deep Dive)
+9.1 One-to-One
+@Entity
+public class Passport {
+    @Id
+    private int id;
+
+    @OneToOne
+    private Student student;
+}
+________________________________________
+9.2 One-to-Many
+@Entity
+public class Department {
+    @Id
+    private int id;
+
+    @OneToMany
+    private List<Employee> employees;
+}
+________________________________________
+9.3 Many-to-Many
+@Entity
+public class Course {
+    @Id
+    private int id;
+
+    @ManyToMany
+    private List<Student> students;
+}
+________________________________________
+Diagram Example:
+Student <-----> Course
+•	A student can enroll in many courses
+•	A course can have many students
+________________________________________
+10. Hibernate Caching (Expanded)
+Hibernate supports caching to improve performance.
+________________________________________
+10.1 First Level Cache
+•	Enabled by default
+•	Associated with Session
+________________________________________
+10.2 Second Level Cache
+•	Must be configured
+•	Associated with SessionFactory
+•	Providers: EHCache, Infinispan
+________________________________________
+Simple Example:
+Student s1 = session.get(Student.class, 1);
+Student s2 = session.get(Student.class, 1); // No DB hit
+________________________________________
+11. Hibernate Mapping Types
+Java Type	Hibernate Type
+int	integer
+long	long
+String	string
+Date	date
+boolean	boolean
+________________________________________
+12. Hibernate Performance Tuning Tips
+•	Use caching
+•	Minimize database hits
+•	Use batch-size for large updates
+•	Write optimized HQL
+•	Prefer lazy loading
+________________________________________
+13. Hibernate Validator
+Hibernate provides a powerful validation framework.
+________________________________________
+Example:
+@Entity
+public class User {
+    @Id
+    private int id;
+
+    @NotNull
+    private String name;
+}
+________________________________________
+14. Hibernate vs JDBC
+Feature	Hibernate	JDBC
+Complexity	Low	High
+SQL Dependency	No	Yes
+Database Independence	Yes	No
+Performance	High (with caching)	Moderate
+________________________________________
+15. Hibernate Best Practices
+•	Always close Session and SessionFactory
+•	Use transactions properly
+•	Use proper FetchType (EAGER vs LAZY)
+•	Prefer annotations over XML
+•	Use logging for debugging
+________________________________________
+16. Real-world Example: Hibernate with MySQL
+1.	Dependency (Maven)
+<dependency>
+  <groupId>org.hibernate</groupId>
+  <artifactId>hibernate-core</artifactId>
+  <version>5.4.10.Final</version>
+</dependency>
+2.	Model Class
+@Entity
+public class Product {
+    @Id
+    @GeneratedValue
+    private int id;
+    private String name;
+    private double price;
+}
+3.	Saving a Product
+
