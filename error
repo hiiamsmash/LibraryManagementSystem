@@ -14,7 +14,14 @@ END;
 
 
 
+public Customer createCustomer(Customer customer) {
+    // Fetch the AccountType based on accountTypeId
+    AccountType accountType = accountTypeRepo.findById(customer.getAccountType().getId())
+            .orElseThrow(() -> new CustomException("Invalid account type"));
 
+    customer.setAccountType(accountType);  // Set the accountType for the customer
+    return customerRepo.save(customer);
+}
 
 
 
