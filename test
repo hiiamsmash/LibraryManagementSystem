@@ -1,0 +1,68 @@
+✅ How to Test in Postman
+🔸 Register a User
+Method: POST http://localhost:8080/api/auth/register
+
+Body (JSON):
+
+json
+Copy
+Edit
+{
+  "loginId": 3,
+  "username": "amit_singh",
+  "password": "test@123"
+}
+🔸 Login User
+Method: POST http://localhost:8080/api/auth/login
+
+Body (JSON):
+
+json
+Copy
+Edit
+{
+  "loginId": 3,
+  "password": "test@123"
+}
+🔸 Create Customer
+Method: POST http://localhost:8080/api/customers
+
+Body (JSON):
+
+json
+Copy
+Edit
+{
+  "loginId": 3,
+  "name": "Amit Singh",
+  "email": "amit@example.com",
+  "phone": "9876543212",
+  "address": "123, Mumbai",
+  "dob": "1990-12-05",
+  "accountTypeId": 1
+}
+🔸 Get Customer by ID
+Method: GET http://localhost:8080/api/customers/3
+
+🔸 Create Account for Customer
+Method: POST http://localhost:8080/api/customers/3/accounts
+
+Body (JSON):
+
+json
+Copy
+Edit
+{
+  "balance": 5000.00
+}
+🔸 Deposit Amount
+Method: POST http://localhost:8080/api/accounts/3/deposit?amount=2000
+
+🔸 Withdraw Amount
+Method: POST http://localhost:8080/api/accounts/3/withdraw?amount=1000
+
+🔸 Transfer Amount
+Method: POST http://localhost:8080/api/accounts/transfer?from=3&to=4&amount=500
+
+🔸 Transaction History
+Method: GET http://localhost:8080/api/accounts/3/transactions
