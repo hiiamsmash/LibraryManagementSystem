@@ -1,0 +1,369 @@
+File Structure
+Here’s the overall file structure that you can follow for your Spring Boot application:
+
+pgsql
+Copy
+Edit
+CompleteBankingSystem/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/com/intern/bank/
+        │   ├── BankApplication.java
+        │   ├── controller/
+        │   │   ├── AuthController.java
+        │   │   └── BankController.java
+        │   ├── exception/
+        │   │   └── CustomException.java
+        │   ├── model/
+        │   │   ├── UserLogin.java
+        │   │   ├── Customer.java
+        │   │   ├── AccountType.java
+        │   │   ├── AccountBalance.java
+        │   │   └── Transaction.java
+        │   ├── repository/
+        │   │   ├── UserLoginRepository.java
+        │   │   ├── CustomerRepository.java
+        │   │   ├── AccountTypeRepository.java
+        │   │   ├── AccountBalanceRepository.java
+        │   │   └── TransactionRepository.java
+        │   └── service/
+        │       ├── AuthService.java
+        │       └── BankService.java
+        └── resources/
+            └── application.properties
+Step-by-Step Code
+1. pom.xml (Maven Dependencies)
+Ensure that you have the necessary dependencies in pom.xml:
+
+xml
+Copy
+Edit
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.oracle.database.jdbc</groupId>
+        <artifactId>ojdbc8</artifactId>
+        <version>19.3.0.0</version>
+    </dependency>
+</dependencies>
+2. application.properties
+Ensure your application.properties is configured properly for Oracle 10g:
+
+properties
+Copy
+Edit
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+spring.jpa.database-platform=org.hibernate.dialect.Oracle10gDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+3. BankApplication.java (Main Application)
+The entry point for your Spring Boot application:
+
+java
+Copy
+Edit
+package com.intern.bank;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
+}
+4. CustomException.java
+Custom exception to handle errors like invalid input:
+
+java
+Copy
+Edit
+package com.intern.bank.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+5. Customer.java (Model)
+The Customer entity, with auto-generated IDs using sequences:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_seq_gen")
+    @SequenceGenerator(name = "customer_seq_gen", sequenceName = "customer_seq", allocationSize = 1)
+    @Column(name = "CUSTOMER_ID")
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "LOGIN_ID")
+    private UserLogin login;
+
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_TYPE_ID")
+    private AccountType accountType;
+
+    @Column(name = "NAME")
+    private String name;
+
+    @Column(name = "EMAIL")
+    private String email;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "DOB")
+    private LocalDate dob;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public UserLogin getLogin() { return login; }
+    public void setLogin(UserLogin login) { this.login = login; }
+
+    public AccountType getAccountType() { return accountType; }
+    public void setAccountType(AccountType accountType) { this.accountType = accountType; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public LocalDate getDob() { return dob; }
+    public void setDob(LocalDate dob) { this.dob = dob; }
+}
+6. AccountBalance.java (Model)
+The AccountBalance entity, where the ID is auto-generated using sequences:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_BALANCE")
+public class AccountBalance {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_balance_seq_gen")
+    @SequenceGenerator(name = "account_balance_seq_gen", sequenceName = "account_balance_seq", allocationSize = 1)
+    @Column(name = "BALANCE_ID")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID")
+    private Customer customer;
+
+    @Column(name = "BALANCE")
+    private BigDecimal balance;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+}
+7. Transaction.java (Model)
+The Transaction entity with auto-generated IDs:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq_gen")
+    @SequenceGenerator(name = "transaction_seq_gen", sequenceName = "transaction_seq", allocationSize = 1)
+    @Column(name = "TRANSACTION_ID")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "BALANCE_ID")
+    private AccountBalance accountBalance;
+
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
+
+    @Column(name = "AMOUNT")
+    private BigDecimal amount;
+
+    @Column(name = "TRANSACTION_DATE")
+    private LocalDateTime transactionDate;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public AccountBalance getAccountBalance() { return accountBalance; }
+    public void setAccountBalance(AccountBalance accountBalance) { this.accountBalance = accountBalance; }
+
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+
+    public LocalDateTime getTransactionDate() { return transactionDate; }
+    public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+}
+8. BankService.java (Service)
+Service layer to handle account and transaction logic:
+
+java
+Copy
+Edit
+package com.intern.bank.service;
+
+import com.intern.bank.exception.CustomException;
+import com.intern.bank.model.*;
+import com.intern.bank.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class BankService {
+    @Autowired private CustomerRepository customerRepo;
+    @Autowired private AccountBalanceRepository balanceRepo;
+    @Autowired private TransactionRepository txRepo;
+
+    public AccountBalance createAccount(Long customerId, AccountBalance accountBalance) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new CustomException("Customer not found"));
+        
+        accountBalance.setCustomer(customer);
+        if (accountBalance.getBalance() == null) {
+            accountBalance.setBalance(BigDecimal.ZERO);
+        }
+        return balanceRepo.save(accountBalance);
+    }
+
+    public Transaction deposit(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        account.setBalance(account.getBalance().add(amt));
+        balanceRepo.save(account);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("DEPOSIT");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+
+        return txRepo.save(tx);
+    }
+
+    public Transaction withdraw(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        if (account.getBalance().compareTo(amt) < 0) {
+            throw new CustomException("Insufficient funds");
+        }
+
+        account.setBalance(account.getBalance().subtract(amt));
+        balanceRepo.save(account);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("WITHDRAW");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+
+        return txRepo.save(tx);
+    }
+}
+9. BankController.java (Controller)
+Controller to expose the endpoints:
+
+java
+Copy
+Edit
+package com.intern.bank.controller;
+
+import com.intern.bank.model.*;
+import com.intern.bank.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+public class BankController {
+    @Autowired private BankService bankService;
+
+    @PostMapping("/customers/{customerId}/accounts")
+    public ResponseEntity<AccountBalance> createAccount(@PathVariable Long customerId, @RequestBody AccountBalance accountBalance) {
+        return ResponseEntity.ok(bankService.createAccount(customerId, accountBalance));
+    }
+
+    @PostMapping("/accounts/{accountId}/deposit")
+    public ResponseEntity<Transaction> deposit(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.deposit(accountId, amount));
+    }
+
+    @PostMapping("/accounts/{accountId}/withdraw")
+    public ResponseEntity<Transaction> withdraw(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.withdraw(accountId, amount));
+    }
+}
