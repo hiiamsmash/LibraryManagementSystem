@@ -1,6 +1,4 @@
-Here’s the complete code and file structure for your Bank Management System built with Spring Boot, Hibernate, and Oracle Database. This version is set up for you to copy and paste into your environment so that it runs directly, and you can test it using Postman with the test URLs provided.
-
-Step 1: Directory Structure
+Directory Structure:
 css
 Copy
 Edit
@@ -36,7 +34,6 @@ src/
 │   └── resources/
 │       ├── application.properties
 └── pom.xml
-Step 2: Code Files
 1. BankApplication.java
 java
 Copy
@@ -63,7 +60,7 @@ spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 spring.jpa.database-platform=org.hibernate.dialect.Oracle12cDialect
 spring.jpa.show-sql=true
 spring.jpa.hibernate.ddl-auto=none
-Update your_username and your_password with your actual Oracle DB credentials.
+Make sure to replace your_username and your_password with your actual database credentials.
 
 3. controller/BankController.java
 java
@@ -122,7 +119,225 @@ public class BankController {
         return ResponseEntity.ok(bankService.getTransactionHistory(customerId));
     }
 }
-4. service/BankService.java
+4. dto/BalanceResponse.java
+java
+Copy
+Edit
+package com.example.bank.dto;
+
+public class BalanceResponse {
+    private String name;
+    private Double balance;
+
+    // Getters and setters
+}
+5. dto/LoginRequest.java
+java
+Copy
+Edit
+package com.example.bank.dto;
+
+public class LoginRequest {
+    private String username;
+    private String password;
+
+    // Getters and setters
+}
+6. dto/TransactionRequest.java
+java
+Copy
+Edit
+package com.example.bank.dto;
+
+public class TransactionRequest {
+    private Long customerId;
+    private Double amount;
+
+    // Getters and setters
+}
+7. entity/AccountBalance.java
+java
+Copy
+Edit
+package com.example.bank.entity;
+
+import javax.persistence.*;
+
+@Entity
+public class AccountBalance {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long balanceId;
+
+    @OneToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    private Double balance;
+
+    // Getters and setters
+}
+8. entity/AccountType.java
+java
+Copy
+Edit
+package com.example.bank.entity;
+
+import javax.persistence.*;
+
+@Entity
+public class AccountType {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long accountTypeId;
+
+    private String accountType;
+
+    // Getters and setters
+}
+9. entity/BankTransaction.java
+java
+Copy
+Edit
+package com.example.bank.entity;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+public class BankTransaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long transactionId;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    private String transactionType;
+    private Double amount;
+    private Date transactionDate = new Date();
+
+    // Getters and setters
+}
+10. entity/Customer.java
+java
+Copy
+Edit
+package com.example.bank.entity;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+public class Customer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long customerId;
+
+    private String name;
+    private String email;
+    private String phone;
+    private String address;
+    private Date dob;
+
+    @ManyToOne
+    @JoinColumn(name = "account_type_id")
+    private AccountType accountType;
+
+    @OneToOne
+    @JoinColumn(name = "login_id")
+    private UserLogin userLogin;
+
+    // Getters and setters
+}
+11. entity/UserLogin.java
+java
+Copy
+Edit
+package com.example.bank.entity;
+
+import javax.persistence.*;
+
+@Entity
+public class UserLogin {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long loginId;
+
+    private String username;
+    private String password;
+
+    // Getters and setters
+}
+12. repository/AccountBalanceRepository.java
+java
+Copy
+Edit
+package com.example.bank.repository;
+
+import com.example.bank.entity.AccountBalance;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
+    AccountBalance findByCustomer_CustomerId(Long customerId);
+}
+13. repository/AccountTypeRepository.java
+java
+Copy
+Edit
+package com.example.bank.repository;
+
+import com.example.bank.entity.AccountType;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AccountTypeRepository extends JpaRepository<AccountType, Long> {
+}
+14. repository/BankTransactionRepository.java
+java
+Copy
+Edit
+package com.example.bank.repository;
+
+import com.example.bank.entity.BankTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
+    List<BankTransaction> findByCustomer_CustomerId(Long customerId);
+}
+15. repository/CustomerRepository.java
+java
+Copy
+Edit
+package com.example.bank.repository;
+
+import com.example.bank.entity.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
+}
+16. repository/UserLoginRepository.java
+java
+Copy
+Edit
+package com.example.bank.repository;
+
+import com.example.bank.entity.UserLogin;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
+    Optional<UserLogin> findByUsernameAndPassword(String username, String password);
+}
+17. service/BankService.java
 java
 Copy
 Edit
@@ -258,69 +473,63 @@ public class BankService {
         }).collect(Collectors.toList());
     }
 }
-5. repository Files (Repositories for Each Entity)
-CustomerRepository.java
+18. service/exception/InsufficientBalanceException.java
 java
 Copy
 Edit
-package com.example.bank.repository;
+package com.example.bank.exception;
 
-import com.example.bank.entity.Customer;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface CustomerRepository extends JpaRepository<Customer, Long> {
+public class InsufficientBalanceException extends RuntimeException {
+    public InsufficientBalanceException(String message) {
+        super(message);
+    }
 }
-AccountBalanceRepository.java
+19. service/exception/LoginFailedException.java
 java
 Copy
 Edit
-package com.example.bank.repository;
+package com.example.bank.exception;
 
-import com.example.bank.entity.AccountBalance;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
-    AccountBalance findByCustomer_CustomerId(Long customerId);
+public class LoginFailedException extends RuntimeException {
+    public LoginFailedException(String message) {
+        super(message);
+    }
 }
-BankTransactionRepository.java
+20. service/exception/UserNotFoundException.java
 java
 Copy
 Edit
-package com.example.bank.repository;
+package com.example.bank.exception;
 
-import com.example.bank.entity.BankTransaction;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
-
-public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
-    List<BankTransaction> findByCustomer_CustomerId(Long customerId);
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String message) {
+        super(message);
+    }
 }
-AccountTypeRepository.java
-java
+21. pom.xml
+xml
 Copy
 Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.AccountType;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface AccountTypeRepository extends JpaRepository<AccountType, Long> {
-}
-UserLoginRepository.java
-java
-Copy
-Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.UserLogin;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
-
-public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
-    Optional<UserLogin> findByUsernameAndPassword(String username, String password);
-}
+<dependencies>
+    <!-- Spring Boot dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.oracle.database.jdbc</groupId>
+        <artifactId>ojdbc8</artifactId>
+        <version>19.8.0.0</version>
+    </dependency>
+</dependencies>
 Step 3: Testing API in Postman
 Postman Test URLs
 1. Login User
