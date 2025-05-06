@@ -1,291 +1,369 @@
-Hibernate Complete Notes
-________________________________________
-1. Introduction to Hibernate
-Hibernate is an ORM (Object Relational Mapping) framework that maps Java classes to database tables.
-It simplifies database programming by hiding the complexities of SQL behind an object-oriented interface.
-________________________________________
-Key Features:
-•	Lightweight and Open Source
-•	Database Independent (can switch databases easily)
-•	Automatic Table Creation
-•	Caching Support
-•	Transaction Management
-•	HQL (Hibernate Query Language)
-________________________________________
-Why Use Hibernate?
-•	Reduces development time
-•	No need to write complex SQL queries
-•	Better productivity and cleaner code
-________________________________________
-Simple Example:
-A Java Object:
-public class Student {
-    private int id;
-    private String name;
+File Structure
+Here’s the overall file structure that you can follow for your Spring Boot application:
+
+pgsql
+Copy
+Edit
+CompleteBankingSystem/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/com/intern/bank/
+        │   ├── BankApplication.java
+        │   ├── controller/
+        │   │   ├── AuthController.java
+        │   │   └── BankController.java
+        │   ├── exception/
+        │   │   └── CustomException.java
+        │   ├── model/
+        │   │   ├── UserLogin.java
+        │   │   ├── Customer.java
+        │   │   ├── AccountType.java
+        │   │   ├── AccountBalance.java
+        │   │   └── Transaction.java
+        │   ├── repository/
+        │   │   ├── UserLoginRepository.java
+        │   │   ├── CustomerRepository.java
+        │   │   ├── AccountTypeRepository.java
+        │   │   ├── AccountBalanceRepository.java
+        │   │   └── TransactionRepository.java
+        │   └── service/
+        │       ├── AuthService.java
+        │       └── BankService.java
+        └── resources/
+            └── application.properties
+Step-by-Step Code
+1. pom.xml (Maven Dependencies)
+Ensure that you have the necessary dependencies in pom.xml:
+
+xml
+Copy
+Edit
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.oracle.database.jdbc</groupId>
+        <artifactId>ojdbc8</artifactId>
+        <version>19.3.0.0</version>
+    </dependency>
+</dependencies>
+2. application.properties
+Ensure your application.properties is configured properly for Oracle 10g:
+
+properties
+Copy
+Edit
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+spring.jpa.database-platform=org.hibernate.dialect.Oracle10gDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+3. BankApplication.java (Main Application)
+The entry point for your Spring Boot application:
+
+java
+Copy
+Edit
+package com.intern.bank;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
 }
-Automatically mapped to a Database Table:
-id	name
-1	John
-________________________________________
-2. Hibernate Architecture
-Hibernate follows a layered architecture:
-Application
-    |
-Hibernate (Configuration, SessionFactory, Session, Transaction, Query)
-    |
-Database
-________________________________________
-Hibernate Core Components
-Component	Description
-Configuration	Reads Hibernate configuration file
-SessionFactory	Provides Sessions
-Session	Performs CRUD operations
-Transaction	Controls commit/rollback
-Query	Executes HQL
-________________________________________
-Detailed Explanation:
-•	Configuration: Loads settings (hibernate.cfg.xml).
-•	SessionFactory: A heavy object, used once per application.
-•	Session: A lightweight, short-lived object.
-•	Transaction: Used to ensure data integrity.
-________________________________________
-Example:
-Configuration cfg = new Configuration();
-cfg.configure("hibernate.cfg.xml");
+4. CustomException.java
+Custom exception to handle errors like invalid input:
 
-SessionFactory factory = cfg.buildSessionFactory();
-Session session = factory.openSession();
-Transaction tx = session.beginTransaction();
-________________________________________
-3. Hibernate Life Cycle
-There are three main states:
-State	Description
-Transient	Object not associated with Session
-Persistent	Object associated with Session
-Detached	Object once associated, now disconnected
-________________________________________
-Example:
-Student s = new Student(); // Transient
+java
+Copy
+Edit
+package com.intern.bank.exception;
 
-Session session = factory.openSession();
-session.save(s);           // Persistent
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-session.close();           // Detached
-________________________________________
-4. Hibernate Configuration (In-depth)
-Hibernate requires configuration to connect to the database.
-________________________________________
-Configuration Files:
-•	hibernate.cfg.xml (most common)
-•	hibernate.properties
-________________________________________
-Example hibernate.cfg.xml:
-<hibernate-configuration>
- <session-factory>
-   <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
-   <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/testdb</property>
-   <property name="hibernate.connection.username">root</property>
-   <property name="hibernate.connection.password">root</property>
-   <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
-   <mapping class="com.model.Student"/>
- </session-factory>
-</hibernate-configuration>
-________________________________________
-5. Hibernate Mapping
-Mapping means relating Java classes to Database tables.
-________________________________________
-5.1 XML Based Mapping
-<class name="Student" table="STUDENT">
-   <id name="id" column="ID" />
-   <property name="name" column="NAME" />
-</class>
-________________________________________
-5.2 Annotation Based Mapping
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+5. Customer.java (Model)
+The Customer entity, with auto-generated IDs using sequences:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
 @Entity
-@Table(name = "STUDENT")
-public class Student {
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+
     @Id
-    @GeneratedValue
-    private int id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_seq_gen")
+    @SequenceGenerator(name = "customer_seq_gen", sequenceName = "customer_seq", allocationSize = 1)
+    @Column(name = "CUSTOMER_ID")
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "LOGIN_ID")
+    private UserLogin login;
+
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_TYPE_ID")
+    private AccountType accountType;
 
     @Column(name = "NAME")
     private String name;
+
+    @Column(name = "EMAIL")
+    private String email;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "DOB")
+    private LocalDate dob;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public UserLogin getLogin() { return login; }
+    public void setLogin(UserLogin login) { this.login = login; }
+
+    public AccountType getAccountType() { return accountType; }
+    public void setAccountType(AccountType accountType) { this.accountType = accountType; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public LocalDate getDob() { return dob; }
+    public void setDob(LocalDate dob) { this.dob = dob; }
 }
-________________________________________
-6. Hibernate Annotations (Detailed)
-Annotation	Purpose
-@Entity	Declares class as an entity
-@Id	Marks field as primary key
-@GeneratedValue	Auto-increment primary key
-@Column	Maps field to database column
-@Table	Maps class to database table
-________________________________________
-More Examples:
+6. AccountBalance.java (Model)
+The AccountBalance entity, where the ID is auto-generated using sequences:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+
 @Entity
-@Table(name = "Employee")
-public class Employee {
+@Table(name = "INTERN_ACCOUNT_BALANCE")
+public class AccountBalance {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int empId;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_balance_seq_gen")
+    @SequenceGenerator(name = "account_balance_seq_gen", sequenceName = "account_balance_seq", allocationSize = 1)
+    @Column(name = "BALANCE_ID")
+    private Long id;
 
-    @Column(name = "emp_name")
-    private String name;
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID")
+    private Customer customer;
+
+    @Column(name = "BALANCE")
+    private BigDecimal balance;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 }
-________________________________________
-7. Hibernate CRUD Operations (Expanded)
-7.1 Insert (Create)
-Session session = factory.openSession();
-Transaction tx = session.beginTransaction();
+7. Transaction.java (Model)
+The Transaction entity with auto-generated IDs:
 
-Student s = new Student();
-s.setName("Mark");
+java
+Copy
+Edit
+package com.intern.bank.model;
 
-session.save(s);
-tx.commit();
-________________________________________
-7.2 Read (Retrieve)
-Student s = session.get(Student.class, 1);
-System.out.println(s.getName());
-________________________________________
-7.3 Update
-Student s = session.get(Student.class, 1);
-s.setName("Mike");
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-session.update(s);
-tx.commit();
-________________________________________
-7.4 Delete
-Student s = session.get(Student.class, 1);
-session.delete(s);
-tx.commit();
-________________________________________
-8. Hibernate Query Language (HQL)
-HQL works with entity names, not table names.
-________________________________________
-Examples:
-Fetch all students:
-Query<Student> query = session.createQuery("from Student");
-List<Student> list = query.list();
-________________________________________
-Fetch with condition:
-Query<Student> query = session.createQuery("from Student where name = :name");
-query.setParameter("name", "Mark");
-Student s = query.uniqueResult();
-________________________________________
-Important Points:
-•	Case-insensitive
-•	No need to specify database column names
-•	Object-oriented
-________________________________________
-9. Hibernate Relationships (Deep Dive)
-9.1 One-to-One
 @Entity
-public class Passport {
-    @Id
-    private int id;
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class Transaction {
 
-    @OneToOne
-    private Student student;
-}
-________________________________________
-9.2 One-to-Many
-@Entity
-public class Department {
     @Id
-    private int id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq_gen")
+    @SequenceGenerator(name = "transaction_seq_gen", sequenceName = "transaction_seq", allocationSize = 1)
+    @Column(name = "TRANSACTION_ID")
+    private Long id;
 
-    @OneToMany
-    private List<Employee> employees;
-}
-________________________________________
-9.3 Many-to-Many
-@Entity
-public class Course {
-    @Id
-    private int id;
+    @ManyToOne
+    @JoinColumn(name = "BALANCE_ID")
+    private AccountBalance accountBalance;
 
-    @ManyToMany
-    private List<Student> students;
-}
-________________________________________
-Diagram Example:
-Student <-----> Course
-•	A student can enroll in many courses
-•	A course can have many students
-________________________________________
-10. Hibernate Caching (Expanded)
-Hibernate supports caching to improve performance.
-________________________________________
-10.1 First Level Cache
-•	Enabled by default
-•	Associated with Session
-________________________________________
-10.2 Second Level Cache
-•	Must be configured
-•	Associated with SessionFactory
-•	Providers: EHCache, Infinispan
-________________________________________
-Simple Example:
-Student s1 = session.get(Student.class, 1);
-Student s2 = session.get(Student.class, 1); // No DB hit
-________________________________________
-11. Hibernate Mapping Types
-Java Type	Hibernate Type
-int	integer
-long	long
-String	string
-Date	date
-boolean	boolean
-________________________________________
-12. Hibernate Performance Tuning Tips
-•	Use caching
-•	Minimize database hits
-•	Use batch-size for large updates
-•	Write optimized HQL
-•	Prefer lazy loading
-________________________________________
-13. Hibernate Validator
-Hibernate provides a powerful validation framework.
-________________________________________
-Example:
-@Entity
-public class User {
-    @Id
-    private int id;
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
 
-    @NotNull
-    private String name;
-}
-________________________________________
-14. Hibernate vs JDBC
-Feature	Hibernate	JDBC
-Complexity	Low	High
-SQL Dependency	No	Yes
-Database Independence	Yes	No
-Performance	High (with caching)	Moderate
-________________________________________
-15. Hibernate Best Practices
-•	Always close Session and SessionFactory
-•	Use transactions properly
-•	Use proper FetchType (EAGER vs LAZY)
-•	Prefer annotations over XML
-•	Use logging for debugging
-________________________________________
-16. Real-world Example: Hibernate with MySQL
-1.	Dependency (Maven)
-<dependency>
-  <groupId>org.hibernate</groupId>
-  <artifactId>hibernate-core</artifactId>
-  <version>5.4.10.Final</version>
-</dependency>
-2.	Model Class
-@Entity
-public class Product {
-    @Id
-    @GeneratedValue
-    private int id;
-    private String name;
-    private double price;
-}
-3.	Saving a Product
+    @Column(name = "AMOUNT")
+    private BigDecimal amount;
 
+    @Column(name = "TRANSACTION_DATE")
+    private LocalDateTime transactionDate;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public AccountBalance getAccountBalance() { return accountBalance; }
+    public void setAccountBalance(AccountBalance accountBalance) { this.accountBalance = accountBalance; }
+
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+
+    public LocalDateTime getTransactionDate() { return transactionDate; }
+    public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+}
+8. BankService.java (Service)
+Service layer to handle account and transaction logic:
+
+java
+Copy
+Edit
+package com.intern.bank.service;
+
+import com.intern.bank.exception.CustomException;
+import com.intern.bank.model.*;
+import com.intern.bank.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class BankService {
+    @Autowired private CustomerRepository customerRepo;
+    @Autowired private AccountBalanceRepository balanceRepo;
+    @Autowired private TransactionRepository txRepo;
+
+    public AccountBalance createAccount(Long customerId, AccountBalance accountBalance) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new CustomException("Customer not found"));
+        
+        accountBalance.setCustomer(customer);
+        if (accountBalance.getBalance() == null) {
+            accountBalance.setBalance(BigDecimal.ZERO);
+        }
+        return balanceRepo.save(accountBalance);
+    }
+
+    public Transaction deposit(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        account.setBalance(account.getBalance().add(amt));
+        balanceRepo.save(account);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("DEPOSIT");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+
+        return txRepo.save(tx);
+    }
+
+    public Transaction withdraw(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        if (account.getBalance().compareTo(amt) < 0) {
+            throw new CustomException("Insufficient funds");
+        }
+
+        account.setBalance(account.getBalance().subtract(amt));
+        balanceRepo.save(account);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("WITHDRAW");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+
+        return txRepo.save(tx);
+    }
+}
+9. BankController.java (Controller)
+Controller to expose the endpoints:
+
+java
+Copy
+Edit
+package com.intern.bank.controller;
+
+import com.intern.bank.model.*;
+import com.intern.bank.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+public class BankController {
+    @Autowired private BankService bankService;
+
+    @PostMapping("/customers/{customerId}/accounts")
+    public ResponseEntity<AccountBalance> createAccount(@PathVariable Long customerId, @RequestBody AccountBalance accountBalance) {
+        return ResponseEntity.ok(bankService.createAccount(customerId, accountBalance));
+    }
+
+    @PostMapping("/accounts/{accountId}/deposit")
+    public ResponseEntity<Transaction> deposit(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.deposit(accountId, amount));
+    }
+
+    @PostMapping("/accounts/{accountId}/withdraw")
+    public ResponseEntity<Transaction> withdraw(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.withdraw(accountId, amount));
+    }
+}
