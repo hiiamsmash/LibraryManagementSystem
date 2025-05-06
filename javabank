@@ -248,3 +248,248 @@ public class Transaction {
     public LocalDateTime getTransactionDate() { return transactionDate; }
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
 }
+
+
+
+
+
+// ✅ Repositories
+package com.intern.bank.repository;
+
+import com.intern.bank.model.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
+    Optional<UserLogin> findByUsername(String username);
+}
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {}
+
+public interface AccountTypeRepository extends JpaRepository<AccountType, Long> {}
+
+public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
+    List<AccountBalance> findByCustomerId(Long customerId);
+}
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    List<Transaction> findByAccountBalanceId(Long accountId);
+}
+
+// ✅ AuthService.java
+package com.intern.bank.service;
+
+import com.intern.bank.exception.CustomException;
+import com.intern.bank.model.UserLogin;
+import com.intern.bank.repository.UserLoginRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+    @Autowired
+    private UserLoginRepository userLoginRepository;
+
+    public UserLogin register(UserLogin user) {
+        userLoginRepository.findByUsername(user.getUsername())
+            .ifPresent(u -> { throw new CustomException("Username already exists"); });
+        return userLoginRepository.save(user);
+    }
+
+    public void login(UserLogin req) {
+        UserLogin user = userLoginRepository.findByUsername(req.getUsername())
+            .orElseThrow(() -> new CustomException("User not found"));
+        if (!user.getPassword().equals(req.getPassword())) {
+            throw new CustomException("Invalid credentials");
+        }
+    }
+}
+
+// ✅ BankService.java
+package com.intern.bank.service;
+
+import com.intern.bank.exception.CustomException;
+import com.intern.bank.model.*;
+import com.intern.bank.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class BankService {
+    @Autowired private CustomerRepository customerRepo;
+    @Autowired private AccountTypeRepository typeRepo;
+    @Autowired private AccountBalanceRepository balanceRepo;
+    @Autowired private TransactionRepository txRepo;
+
+    public Customer createCustomer(Customer c) {
+        return customerRepo.save(c);
+    }
+
+    public Customer getCustomerById(Long id) {
+        return customerRepo.findById(id)
+            .orElseThrow(() -> new CustomException("Customer not found"));
+    }
+
+    public List<Customer> getAllCustomers() {
+        return customerRepo.findAll();
+    }
+
+    public AccountBalance createAccount(Long customerId, AccountBalance ab) {
+        Customer c = getCustomerById(customerId);
+        ab.setCustomer(c);
+        if (ab.getBalance() == null) {
+            ab.setBalance(BigDecimal.ZERO);
+        }
+        return balanceRepo.save(ab);
+    }
+
+    public List<AccountBalance> getAccountsByCustomer(Long customerId) {
+        getCustomerById(customerId);
+        return balanceRepo.findByCustomerId(customerId);
+    }
+
+    public AccountBalance getAccountById(Long id) {
+        return balanceRepo.findById(id)
+            .orElseThrow(() -> new CustomException("Account not found"));
+    }
+
+    public Transaction deposit(Long accountId, BigDecimal amt) {
+        AccountBalance acct = getAccountById(accountId);
+        acct.setBalance(acct.getBalance().add(amt));
+        balanceRepo.save(acct);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(acct);
+        tx.setTransactionType("DEPOSIT");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+        return txRepo.save(tx);
+    }
+
+    public Transaction withdraw(Long accountId, BigDecimal amt) {
+        AccountBalance acct = getAccountById(accountId);
+        if (acct.getBalance().compareTo(amt) < 0) {
+            throw new CustomException("Insufficient funds");
+        }
+        acct.setBalance(acct.getBalance().subtract(amt));
+        balanceRepo.save(acct);
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(acct);
+        tx.setTransactionType("WITHDRAW");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+        return txRepo.save(tx);
+    }
+
+    public void transfer(Long fromAcctId, Long toAcctId, BigDecimal amt) {
+        withdraw(fromAcctId, amt);
+        deposit(toAcctId, amt);
+    }
+
+    public List<Transaction> getTransactions(Long accountId) {
+        return txRepo.findByAccountBalanceId(accountId);
+    }
+}
+
+// ✅ AuthController.java
+package com.intern.bank.controller;
+
+import com.intern.bank.model.UserLogin;
+import com.intern.bank.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+    @Autowired private AuthService authService;
+
+    @PostMapping("/register")
+    public ResponseEntity<UserLogin> register(@RequestBody UserLogin user) {
+        return ResponseEntity.ok(authService.register(user));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody UserLogin req) {
+        authService.login(req);
+        return ResponseEntity.ok("Login successful");
+    }
+}
+
+// ✅ BankController.java
+package com.intern.bank.controller;
+
+import com.intern.bank.model.*;
+import com.intern.bank.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+public class BankController {
+    @Autowired private BankService bankService;
+
+    @PostMapping("/customers")
+    public ResponseEntity<Customer> createCustomer(@RequestBody Customer c) {
+        return ResponseEntity.ok(bankService.createCustomer(c));
+    }
+
+    @GetMapping("/customers/{id}")
+    public ResponseEntity<Customer> getCustomer(@PathVariable Long id) {
+        return ResponseEntity.ok(bankService.getCustomerById(id));
+    }
+
+    @GetMapping("/customers")
+    public ResponseEntity<List<Customer>> getAllCustomers() {
+        return ResponseEntity.ok(bankService.getAllCustomers());
+    }
+
+    @PostMapping("/customers/{custId}/accounts")
+    public ResponseEntity<AccountBalance> createAccount(@PathVariable Long custId, @RequestBody AccountBalance a) {
+        return ResponseEntity.ok(bankService.createAccount(custId, a));
+    }
+
+    @GetMapping("/customers/{custId}/accounts")
+    public ResponseEntity<List<AccountBalance>> getAccountsByCustomer(@PathVariable Long custId) {
+        return ResponseEntity.ok(bankService.getAccountsByCustomer(custId));
+    }
+
+    @GetMapping("/accounts/{id}")
+    public ResponseEntity<AccountBalance> getAccount(@PathVariable Long id) {
+        return ResponseEntity.ok(bankService.getAccountById(id));
+    }
+
+    @PostMapping("/accounts/{id}/deposit")
+    public ResponseEntity<Transaction> deposit(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.deposit(id, amount));
+    }
+
+    @PostMapping("/accounts/{id}/withdraw")
+    public ResponseEntity<Transaction> withdraw(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(bankService.withdraw(id, amount));
+    }
+
+    @PostMapping("/accounts/transfer")
+    public ResponseEntity<String> transfer(@RequestParam Long from, @RequestParam Long to, @RequestParam BigDecimal amount) {
+        bankService.transfer(from, to, amount);
+        return ResponseEntity.ok("Transfer completed");
+    }
+
+    @GetMapping("/accounts/{id}/transactions")
+    public ResponseEntity<List<Transaction>> getTransactions(@PathVariable Long id) {
+        return ResponseEntity.ok(bankService.getTransactions(id));
+    }
+}
+
