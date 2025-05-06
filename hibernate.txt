@@ -333,9 +333,6 @@ public class BankService {
 9. BankController.java (Controller)
 Controller to expose the endpoints:
 
-java
-Copy
-Edit
 package com.intern.bank.controller;
 
 import com.intern.bank.model.*;
@@ -350,24 +347,65 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class BankController {
-    @Autowired private BankService bankService;
+    
+    @Autowired
+    private BankService bankService;
 
-    @PostMapping("/customers/{customerId}/accounts")
-    public ResponseEntity<AccountBalance> createAccount(@PathVariable Long customerId, @RequestBody AccountBalance accountBalance) {
-        return ResponseEntity.ok(bankService.createAccount(customerId, accountBalance));
+    // 1. Create Customer
+    @PostMapping("/customers")
+    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
+        return ResponseEntity.status(201).body(bankService.createCustomer(customer));
     }
 
+    // 2. Create Account for a Customer
+    @PostMapping("/customers/{customerId}/accounts")
+    public ResponseEntity<AccountBalance> createAccount(@PathVariable Long customerId, @RequestBody AccountBalance accountBalance) {
+        return ResponseEntity.status(201).body(bankService.createAccount(customerId, accountBalance));
+    }
+
+    // 3. Deposit Money into Account
     @PostMapping("/accounts/{accountId}/deposit")
     public ResponseEntity<Transaction> deposit(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
         return ResponseEntity.ok(bankService.deposit(accountId, amount));
     }
 
+    // 4. Withdraw Money from Account
     @PostMapping("/accounts/{accountId}/withdraw")
     public ResponseEntity<Transaction> withdraw(@PathVariable Long accountId, @RequestParam BigDecimal amount) {
         return ResponseEntity.ok(bankService.withdraw(accountId, amount));
     }
-}
 
+    // 5. Transfer Money Between Accounts
+    @PostMapping("/accounts/transfer")
+    public ResponseEntity<String> transfer(@RequestParam Long from, @RequestParam Long to, @RequestParam BigDecimal amount) {
+        bankService.transfer(from, to, amount);
+        return ResponseEntity.ok("Transfer completed");
+    }
+
+    // 6. View Transactions for an Account
+    @GetMapping("/accounts/{accountId}/transactions")
+    public ResponseEntity<List<Transaction>> getTransactions(@PathVariable Long accountId) {
+        return ResponseEntity.ok(bankService.getTransactions(accountId));
+    }
+
+    // 7. Get Account Details
+    @GetMapping("/accounts/{accountId}")
+    public ResponseEntity<AccountBalance> getAccountDetails(@PathVariable Long accountId) {
+        return ResponseEntity.ok(bankService.getAccountById(accountId));
+    }
+
+    // 8. Get All Customers
+    @GetMapping("/customers")
+    public ResponseEntity<List<Customer>> getAllCustomers() {
+        return ResponseEntity.ok(bankService.getAllCustomers());
+    }
+
+    // 9. Get Customer by ID
+    @GetMapping("/customers/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+        return ResponseEntity.ok(bankService.getCustomerById(id));
+    }
+}
 
 
 
