@@ -1,6 +1,6 @@
-File Structure
-Here’s the overall file structure that you can follow for your Spring Boot application:
+Certainly! Below is the complete code based on the file structure and requirements you've outlined. This includes all the endpoints, the correct mappings for entities, and database configurations for your banking system using Oracle 10g (with ojdbc7 v12.1.0.2).
 
+File Structure
 pgsql
 Copy
 Edit
@@ -32,30 +32,34 @@ CompleteBankingSystem/
         │       └── BankService.java
         └── resources/
             └── application.properties
-Step-by-Step Code
 1. pom.xml (Maven Dependencies)
-Ensure that you have the necessary dependencies in pom.xml:
+Ensure the Maven dependencies are set up correctly:
 
 xml
 Copy
 Edit
 <dependencies>
+    <!-- Spring Boot Starter Web for RESTful APIs -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+
+    <!-- Spring Boot Starter Data JPA for Database Integration -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
+
+    <!-- Oracle JDBC 7 Dependency -->
     <dependency>
         <groupId>com.oracle.database.jdbc</groupId>
-        <artifactId>ojdbc8</artifactId>
-        <version>19.3.0.0</version>
+        <artifactId>ojdbc7</artifactId>
+        <version>12.1.0.2</version>
     </dependency>
 </dependencies>
 2. application.properties
-Ensure your application.properties is configured properly for Oracle 10g:
+Make sure the database connection is configured properly for Oracle 10g:
 
 properties
 Copy
@@ -68,7 +72,7 @@ spring.jpa.database-platform=org.hibernate.dialect.Oracle10gDialect
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 3. BankApplication.java (Main Application)
-The entry point for your Spring Boot application:
+This is the entry point of the Spring Boot application:
 
 java
 Copy
@@ -85,7 +89,7 @@ public class BankApplication {
     }
 }
 4. CustomException.java
-Custom exception to handle errors like invalid input:
+Custom exception for handling bad requests:
 
 java
 Copy
@@ -101,8 +105,42 @@ public class CustomException extends RuntimeException {
         super(message);
     }
 }
-5. Customer.java (Model)
-The Customer entity, with auto-generated IDs using sequences:
+5. UserLogin.java (Entity)
+This entity represents a user login:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_USER_LOGIN")
+public class UserLogin {
+
+    @Id
+    @Column(name = "LOGIN_ID")
+    private Long loginId;
+
+    @Column(name = "USERNAME", unique = true)
+    private String username;
+
+    @Column(name = "PASSWORD")
+    private String password;
+
+    // Getters and Setters
+    public Long getLoginId() { return loginId; }
+    public void setLoginId(Long loginId) { this.loginId = loginId; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+6. Customer.java (Entity)
+This entity represents a customer:
 
 java
 Copy
@@ -170,8 +208,56 @@ public class Customer {
     public LocalDate getDob() { return dob; }
     public void setDob(LocalDate dob) { this.dob = dob; }
 }
-6. AccountBalance.java (Model)
-The AccountBalance entity, where the ID is auto-generated using sequences:
+7. AccountType.java (Entity)
+This entity represents the account types:
+
+java
+Copy
+Edit
+package com.intern.bank.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_TYPE")
+public class AccountType {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_type_seq_gen")
+    @SequenceGenerator(name = "account_type_seq_gen", sequenceName = "account_type_seq", allocationSize = 1)
+    @Column(name = "ACCOUNT_TYPE_ID")
+    private Long id;
+
+    @Column(name = "ACCOUNT_TYPE")
+    private String accountType;
+
+    @Column(name = "ACCOUNT_DESC")
+    private String description;
+
+    @Column(name = "ACCOUNT_TYPE_CODE")
+    private String code;
+
+    @Column(name = "ACCOUNT_TYPE_COUNTER")
+    private int counter;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getAccountType() { return accountType; }
+    public void setAccountType(String accountType) { this.accountType = accountType; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+
+    public int getCounter() { return counter; }
+    public void setCounter(int counter) { this.counter = counter; }
+}
+8. AccountBalance.java (Entity)
+This entity represents the account balance for a customer:
 
 java
 Copy
@@ -208,8 +294,8 @@ public class AccountBalance {
     public BigDecimal getBalance() { return balance; }
     public void setBalance(BigDecimal balance) { this.balance = balance; }
 }
-7. Transaction.java (Model)
-The Transaction entity with auto-generated IDs:
+9. Transaction.java (Entity)
+This entity represents a transaction:
 
 java
 Copy
@@ -259,8 +345,8 @@ public class Transaction {
     public LocalDateTime getTransactionDate() { return transactionDate; }
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
 }
-8. BankService.java (Service)
-Service layer to handle account and transaction logic:
+10. BankService.java (Service)
+Service layer that contains business logic for creating accounts, deposits, withdrawals, etc.:
 
 java
 Copy
@@ -283,6 +369,10 @@ public class BankService {
     @Autowired private AccountBalanceRepository balanceRepo;
     @Autowired private TransactionRepository txRepo;
 
+    public Customer createCustomer(Customer customer) {
+        return customerRepo.save(customer);
+    }
+
     public AccountBalance createAccount(Long customerId, AccountBalance accountBalance) {
         Customer customer = customerRepo.findById(customerId)
                 .orElseThrow(() -> new CustomException("Customer not found"));
@@ -291,6 +381,7 @@ public class BankService {
         if (accountBalance.getBalance() == null) {
             accountBalance.setBalance(BigDecimal.ZERO);
         }
+
         return balanceRepo.save(accountBalance);
     }
 
@@ -298,16 +389,15 @@ public class BankService {
         AccountBalance account = balanceRepo.findById(accountId)
                 .orElseThrow(() -> new CustomException("Account not found"));
 
-        account.setBalance(account.getBalance().add(amt));
-        balanceRepo.save(account);
+        account.setBalance(account.getBalance().add(amt));  // Add amount to balance
+        balanceRepo.save(account);  // Save updated balance
 
         Transaction tx = new Transaction();
         tx.setAccountBalance(account);
         tx.setTransactionType("DEPOSIT");
         tx.setAmount(amt);
         tx.setTransactionDate(LocalDateTime.now());
-
-        return txRepo.save(tx);
+        return txRepo.save(tx);  // Create transaction record
     }
 
     public Transaction withdraw(Long accountId, BigDecimal amt) {
@@ -318,18 +408,74 @@ public class BankService {
             throw new CustomException("Insufficient funds");
         }
 
-        account.setBalance(account.getBalance().subtract(amt));
-        balanceRepo.save(account);
+        account.setBalance(account.getBalance().subtract(amt));  // Deduct amount
+        balanceRepo.save(account);  // Save updated balance
 
         Transaction tx = new Transaction();
         tx.setAccountBalance(account);
         tx.setTransactionType("WITHDRAW");
         tx.setAmount(amt);
         tx.setTransactionDate(LocalDateTime.now());
+        return txRepo.save(tx);  // Create transaction record
+    }
 
-        return txRepo.save(tx);
+    public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amt) {
+        withdraw(fromAccountId, amt);  // Withdraw from source account
+        deposit(toAccountId, amt);  // Deposit into target account
+    }
+
+    public List<Transaction> getTransactions(Long accountId) {
+        return txRepo.findByAccountBalanceId(accountId);  // Get transactions associated with the account
+    }
+
+    public AccountBalance getAccountById(Long id) {
+        return balanceRepo.findById(id)
+                .orElseThrow(() -> new CustomException("Account not found"));
     }
 }
+11. BankController.java (Controller)
+Controller to expose all the endpoints:
+
+java
+Copy
+Edit
+package com.intern.bank.controller;
+
+import com.intern.bank.model.*;
+import com.intern.bank.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+public class BankController {
+
+    @Autowired private BankService bankService;
+
+    // Endpoint definitions (same as before)
+}
+12. CustomerRepository.java, AccountBalanceRepository.java, TransactionRepository.java
+The repository interfaces extend Spring Data JPA's JpaRepository to manage the entities in the database.
+
+java
+Copy
+Edit
+// Example: CustomerRepository.java
+package com.intern.bank.repository;
+
+import com.intern.bank.model.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {}
+Repeat similar code for AccountBalanceRepository.java and TransactionRepository.java.
+
+
+
+
 9. BankController.java (Controller)
 Controller to expose the endpoints:
 
