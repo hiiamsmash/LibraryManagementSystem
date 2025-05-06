@@ -8,3 +8,21 @@ public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
     Customer createdCustomer = bankService.createCustomer(customer);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdCustomer);
 }
+
+
+
+
+
+{
+  "login": {
+    "loginId": 1,
+    "username": "new_user",
+    "password": "password123"
+  },
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "9876543210",
+  "address": "123 Street, City",
+  "dob": "1990-01-01",
+  "accountTypeId": 1
+}
