@@ -1,3 +1,117 @@
+@Service
+public class BankService {
+
+    @Autowired
+    private BankTransactionRepository transactionRepository;
+
+    @Autowired
+    private AccountBalanceRepository balanceRepository;
+
+    public void deposit(BankTransaction transaction) {
+        // Update balance
+        AccountBalance balance = balanceRepository.findByCustomerId(transaction.getCustomerId());
+        if (balance == null) {
+            throw new RuntimeException("Customer not found");
+        }
+
+        balance.setBalance(balance.getBalance() + transaction.getAmount());
+        balanceRepository.save(balance);
+
+        // Save transaction
+        transactionRepository.save(transaction);
+    }
+
+    // Similarly, you can add a withdraw() method if needed
+}
+⚠️ Important: Ensure you’ve added @Repository interfaces like:
+
+java
+Copy
+Edit
+public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {}
+public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
+    AccountBalance findByCustomerId(Long customerId);
+}
+✅ What to Do Next
+Once the deposit() method exists in BankService, your endpoint will work without error.
+
+Would you like the withdraw() method implemented too?
+
+
+
+
+
+
+You said:
+do for withdraw also
+
+
+ChatGPT said:
+Perfect — here's how to implement the withdraw() method in your BankService, and the corresponding controller endpoint.
+
+✅ 1. Add withdraw() in BankService
+java
+Copy
+Edit
+public void withdraw(BankTransaction transaction) {
+    // Get current balance
+    AccountBalance balance = balanceRepository.findByCustomerId(transaction.getCustomerId());
+    if (balance == null) {
+        throw new RuntimeException("Customer not found");
+    }
+
+    // Check for sufficient funds
+    if (balance.getBalance() < transaction.getAmount()) {
+        throw new RuntimeException("Insufficient balance");
+    }
+
+    // Deduct amount and update balance
+    balance.setBalance(balance.getBalance() - transaction.getAmount());
+    balanceRepository.save(balance);
+
+    // Save transaction
+    transactionRepository.save(transaction);
+}
+✅ 2. Add Withdraw Endpoint in BankController
+java
+Copy
+Edit
+@PostMapping("/withdraw")
+public ResponseEntity<String> withdraw(@RequestBody BankTransaction transaction) {
+    bankService.withdraw(transaction);
+    return ResponseEntity.ok("Withdrawal successful");
+}
+✅ 3. Postman Test for Withdrawal
+POST http://localhost:8080/api/bank/withdraw
+Headers:
+
+pgsql
+Copy
+Edit
+Content-Type: application/json
+Body:
+
+json
+Copy
+Edit
+{
+  "customerId": 1,
+  "transactionType": "WITHDRAW",
+  "amount": 500,
+  "transactionDate": "2025-05-07"
+}
+
+
+
+
+
+
+
+
+
+
+
+
 CREATE SEQUENCE customer_id_seq
     START WITH 1
     INCREMENT BY 1
