@@ -589,3 +589,115 @@ CREATE SEQUENCE transaction_seq
   START WITH 1
   INCREMENT BY 1
   NOCACHE;
+
+
+
+
+
+
+
+
+
+
+package com.intern.bank.service;
+
+import com.intern.bank.exception.CustomException;
+import com.intern.bank.model.*;
+import com.intern.bank.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class BankService {
+
+    @Autowired private CustomerRepository customerRepo;
+    @Autowired private AccountBalanceRepository balanceRepo;
+    @Autowired private TransactionRepository txRepo;
+
+    // 1. Create a Customer
+    public Customer createCustomer(Customer customer) {
+        return customerRepo.save(customer);
+    }
+
+    // 2. Create Account for a Customer
+    public AccountBalance createAccount(Long customerId, AccountBalance accountBalance) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new CustomException("Customer not found"));
+
+        accountBalance.setCustomer(customer);
+        if (accountBalance.getBalance() == null) {
+            accountBalance.setBalance(BigDecimal.ZERO);  // Default balance to 0 if none provided
+        }
+
+        return balanceRepo.save(accountBalance);
+    }
+
+    // 3. Deposit Money into Account
+    public Transaction deposit(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        account.setBalance(account.getBalance().add(amt));  // Add amount to balance
+        balanceRepo.save(account);  // Save updated balance
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("DEPOSIT");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+        return txRepo.save(tx);  // Create transaction record
+    }
+
+    // 4. Withdraw Money from Account
+    public Transaction withdraw(Long accountId, BigDecimal amt) {
+        AccountBalance account = balanceRepo.findById(accountId)
+                .orElseThrow(() -> new CustomException("Account not found"));
+
+        if (account.getBalance().compareTo(amt) < 0) {
+            throw new CustomException("Insufficient funds");
+        }
+
+        account.setBalance(account.getBalance().subtract(amt));  // Deduct amount
+        balanceRepo.save(account);  // Save updated balance
+
+        Transaction tx = new Transaction();
+        tx.setAccountBalance(account);
+        tx.setTransactionType("WITHDRAW");
+        tx.setAmount(amt);
+        tx.setTransactionDate(LocalDateTime.now());
+        return txRepo.save(tx);  // Create transaction record
+    }
+
+    // 5. Transfer Money Between Accounts
+    public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amt) {
+        withdraw(fromAccountId, amt);  // Withdraw from source account
+        deposit(toAccountId, amt);  // Deposit into target account
+    }
+
+    // 6. Get Transactions for an Account
+    public List<Transaction> getTransactions(Long accountId) {
+        return txRepo.findByAccountBalanceId(accountId);  // Get transactions associated with the account
+    }
+
+    // 7. Get Account Details
+    public AccountBalance getAccountById(Long id) {
+        return balanceRepo.findById(id)
+                .orElseThrow(() -> new CustomException("Account not found"));
+    }
+
+    // 8. Get All Customers
+    public List<Customer> getAllCustomers() {
+        return customerRepo.findAll();  // Get all customers
+    }
+
+    // 9. Get Customer by ID
+    public Customer getCustomerById(Long id) {
+        return customerRepo.findById(id)
+                .orElseThrow(() -> new CustomException("Customer not found"));
+    }
+}
+
