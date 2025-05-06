@@ -1,44 +1,34 @@
-Directory Structure:
+✅ Folder Structure Recap
 css
 Copy
 Edit
 src/
-├── main/
-│   ├── java/
-│   │   └── com/example/bank/
-│   │       ├── BankApplication.java
-│   │       ├── controller/
-│   │       │   └── BankController.java
-│   │       ├── dto/
-│   │       │   ├── LoginRequest.java
-│   │       │   ├── TransactionRequest.java
-│   │       │   └── BalanceResponse.java
-│   │       ├── entity/
-│   │       │   ├── AccountBalance.java
-│   │       │   ├── AccountType.java
-│   │       │   ├── BankTransaction.java
-│   │       │   ├── Customer.java
-│   │       │   └── UserLogin.java
-│   │       ├── repository/
-│   │       │   ├── AccountBalanceRepository.java
-│   │       │   ├── AccountTypeRepository.java
-│   │       │   ├── BankTransactionRepository.java
-│   │       │   ├── CustomerRepository.java
-│   │       │   └── UserLoginRepository.java
-│   │       └── service/
-│   │           ├── BankService.java
-│   │           └── exception/
-│   │               ├── InsufficientBalanceException.java
-│   │               ├── LoginFailedException.java
-│   │               └── UserNotFoundException.java
-│   └── resources/
-│       ├── application.properties
-└── pom.xml
-1. BankApplication.java
-java
-Copy
-Edit
-package com.example.bank;
+└── main/
+    └── java/
+        └── com/
+            └── oracle/
+                └── bankapp/
+                    ├── BankApplication.java
+                    ├── model/
+                    │   ├── UserLogin.java
+                    │   ├── Customer.java
+                    │   ├── AccountBalance.java
+                    │   └── BankTransaction.java
+                    ├── repository/
+                    │   ├── UserLoginRepository.java
+                    │   ├── CustomerRepository.java
+                    │   ├── AccountBalanceRepository.java
+                    │   └── BankTransactionRepository.java
+                    ├── service/
+                    │   └── BankService.java
+                    └── controller/
+                        └── BankController.java
+    └── resources/
+        └── application.properties
+
+
+// BankApplication.java
+package com.oracle.bankapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -49,287 +39,260 @@ public class BankApplication {
         SpringApplication.run(BankApplication.class, args);
     }
 }
-2. application.properties
-properties
-Copy
-Edit
+
+// pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.oracle</groupId>
+    <artifactId>bankapp</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <spring-boot.version>2.7.10</spring-boot.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc7</artifactId>
+            <version>12.1.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+// application.properties
 spring.datasource.url=jdbc:oracle:thin:@localhost:1521:xe
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+spring.datasource.username=your_oracle_username
+spring.datasource.password=your_oracle_password
 spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
-spring.jpa.database-platform=org.hibernate.dialect.Oracle12cDialect
-spring.jpa.show-sql=true
+spring.jpa.database-platform=org.hibernate.dialect.Oracle10gDialect
 spring.jpa.hibernate.ddl-auto=none
-Make sure to replace your_username and your_password with your actual database credentials.
+spring.jpa.show-sql=true
 
-3. controller/BankController.java
-java
-Copy
-Edit
-package com.example.bank.controller;
+// Directory structure:
+// com/oracle/bankapp/model/
+// com/oracle/bankapp/repository/
+// com/oracle/bankapp/service/
+// com/oracle/bankapp/controller/
 
-import com.example.bank.dto.*;
-import com.example.bank.service.BankService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+// --- Entity Classes ---
 
-@RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
-public class BankController {
-
-    private final BankService bankService;
-
-    @PostMapping("/login")
-    public ResponseEntity<Long> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(bankService.login(request));
-    }
-
-    @PostMapping("/customers")
-    public ResponseEntity<String> createCustomer(@RequestBody CreateCustomerRequest request) {
-        bankService.createCustomer(request);
-        return ResponseEntity.ok("Customer created successfully");
-    }
-
-    @GetMapping("/customers/{customerId}")
-    public ResponseEntity<CustomerInfoResponse> getCustomerInfo(@PathVariable Long customerId) {
-        return ResponseEntity.ok(bankService.getCustomerInfo(customerId));
-    }
-
-    @PostMapping("/transactions/deposit")
-    public ResponseEntity<String> deposit(@RequestBody TransactionRequest request) {
-        bankService.deposit(request);
-        return ResponseEntity.ok("Amount deposited successfully");
-    }
-
-    @PostMapping("/transactions/withdraw")
-    public ResponseEntity<String> withdraw(@RequestBody TransactionRequest request) {
-        bankService.withdraw(request);
-        return ResponseEntity.ok("Amount withdrawn successfully");
-    }
-
-    @GetMapping("/balance/{customerId}")
-    public ResponseEntity<BalanceResponse> getBalance(@PathVariable Long customerId) {
-        return ResponseEntity.ok(bankService.viewBalance(customerId));
-    }
-
-    @GetMapping("/transactions/{customerId}")
-    public ResponseEntity<List<BankTransactionResponse>> getTransactionHistory(@PathVariable Long customerId) {
-        return ResponseEntity.ok(bankService.getTransactionHistory(customerId));
-    }
-}
-4. dto/BalanceResponse.java
-java
-Copy
-Edit
-package com.example.bank.dto;
-
-public class BalanceResponse {
-    private String name;
-    private Double balance;
-
-    // Getters and setters
-}
-5. dto/LoginRequest.java
-java
-Copy
-Edit
-package com.example.bank.dto;
-
-public class LoginRequest {
-    private String username;
-    private String password;
-
-    // Getters and setters
-}
-6. dto/TransactionRequest.java
-java
-Copy
-Edit
-package com.example.bank.dto;
-
-public class TransactionRequest {
-    private Long customerId;
-    private Double amount;
-
-    // Getters and setters
-}
-7. entity/AccountBalance.java
-java
-Copy
-Edit
-package com.example.bank.entity;
+// UserLogin.java
+package com.oracle.bankapp.model;
 
 import javax.persistence.*;
 
 @Entity
-public class AccountBalance {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long balanceId;
-
-    @OneToOne
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
-
-    private Double balance;
-
-    // Getters and setters
-}
-8. entity/AccountType.java
-java
-Copy
-Edit
-package com.example.bank.entity;
-
-import javax.persistence.*;
-
-@Entity
-public class AccountType {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long accountTypeId;
-
-    private String accountType;
-
-    // Getters and setters
-}
-9. entity/BankTransaction.java
-java
-Copy
-Edit
-package com.example.bank.entity;
-
-import javax.persistence.*;
-import java.util.Date;
-
-@Entity
-public class BankTransaction {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long transactionId;
-
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
-
-    private String transactionType;
-    private Double amount;
-    private Date transactionDate = new Date();
-
-    // Getters and setters
-}
-10. entity/Customer.java
-java
-Copy
-Edit
-package com.example.bank.entity;
-
-import javax.persistence.*;
-import java.util.Date;
-
-@Entity
-public class Customer {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long customerId;
-
-    private String name;
-    private String email;
-    private String phone;
-    private String address;
-    private Date dob;
-
-    @ManyToOne
-    @JoinColumn(name = "account_type_id")
-    private AccountType accountType;
-
-    @OneToOne
-    @JoinColumn(name = "login_id")
-    private UserLogin userLogin;
-
-    // Getters and setters
-}
-11. entity/UserLogin.java
-java
-Copy
-Edit
-package com.example.bank.entity;
-
-import javax.persistence.*;
-
-@Entity
+@Table(name = "INTERN_USER_LOGIN")
 public class UserLogin {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "LOGIN_ID")
     private Long loginId;
 
+    @Column(name = "USERNAME", unique = true, nullable = false)
     private String username;
+
+    @Column(name = "PASSWORD", nullable = false)
     private String password;
 
-    // Getters and setters
+    public Long getLoginId() { return loginId; }
+    public void setLoginId(Long loginId) { this.loginId = loginId; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
-12. repository/AccountBalanceRepository.java
+
+// Customer.java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+    @Id
+    @Column(name = "CUSTOMER_ID")
+    private Long customerId;
+
+    @Column(name = "LOGIN_ID", unique = true)
+    private Long loginId;
+
+    @Column(name = "NAME", nullable = false)
+    private String name;
+
+    @Column(name = "EMAIL", nullable = false)
+    private String email;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "DOB")
+    private Date dob;
+
+    @Column(name = "ACCOUNT_TYPE_ID", nullable = false)
+    private Long accountTypeId;
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getLoginId() { return loginId; }
+    public void setLoginId(Long loginId) { this.loginId = loginId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public Date getDob() { return dob; }
+    public void setDob(Date dob) { this.dob = dob; }
+
+    public Long getAccountTypeId() { return accountTypeId; }
+    public void setAccountTypeId(Long accountTypeId) { this.accountTypeId = accountTypeId; }
+}
+
+// AccountBalance.java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_BALANCE")
+public class AccountBalance {
+    @Id
+    @Column(name = "BALANCE_ID")
+    private Long balanceId;
+
+    @Column(name = "CUSTOMER_ID", nullable = false)
+    private Long customerId;
+
+    @Column(name = "BALANCE")
+    private Double balance;
+
+    public AccountBalance() {}
+
+    public AccountBalance(Long balanceId, Long customerId, Double balance) {
+        this.balanceId = balanceId;
+        this.customerId = customerId;
+        this.balance = balance;
+    }
+
+    public Long getBalanceId() { return balanceId; }
+    public void setBalanceId(Long balanceId) { this.balanceId = balanceId; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Double getBalance() { return balance; }
+    public void setBalance(Double balance) { this.balance = balance; }
+}
+
+// BankTransaction.java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class BankTransaction {
+    @Id
+    @Column(name = "TRANSACTION_ID")
+    private Long transactionId;
+
+    @Column(name = "CUSTOMER_ID", nullable = false)
+    private Long customerId;
+
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
+
+    @Column(name = "AMOUNT")
+    private Double amount;
+
+    @Column(name = "TRANSACTION_DATE")
+    private Date transactionDate;
+
+    public BankTransaction() {}
+
+    public BankTransaction(Long transactionId, Long customerId, String transactionType, Double amount, Date transactionDate) {
+        this.transactionId = transactionId;
+        this.customerId = customerId;
+        this.transactionType = transactionType;
+        this.amount = amount;
+        this.transactionDate = transactionDate;
+    }
+
+    public Long getTransactionId() { return transactionId; }
+    public void setTransactionId(Long transactionId) { this.transactionId = transactionId; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
+
+    public Date getTransactionDate() { return transactionDate; }
+    public void setTransactionDate(Date transactionDate) { this.transactionDate = transactionDate; }
+}
+
+
+✅ File: repository/UserLoginRepository.java
 java
 Copy
 Edit
-package com.example.bank.repository;
+package com.oracle.bankapp.repository;
 
-import com.example.bank.entity.AccountBalance;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
-    AccountBalance findByCustomer_CustomerId(Long customerId);
-}
-13. repository/AccountTypeRepository.java
-java
-Copy
-Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.AccountType;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface AccountTypeRepository extends JpaRepository<AccountType, Long> {
-}
-14. repository/BankTransactionRepository.java
-java
-Copy
-Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.BankTransaction;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
-
-public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
-    List<BankTransaction> findByCustomer_CustomerId(Long customerId);
-}
-15. repository/CustomerRepository.java
-java
-Copy
-Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.Customer;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface CustomerRepository extends JpaRepository<Customer, Long> {
-}
-16. repository/UserLoginRepository.java
-java
-Copy
-Edit
-package com.example.bank.repository;
-
-import com.example.bank.entity.UserLogin;
+import com.oracle.bankapp.model.UserLogin;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -337,266 +300,185 @@ import java.util.Optional;
 public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
     Optional<UserLogin> findByUsernameAndPassword(String username, String password);
 }
-17. service/BankService.java
+✅ File: repository/CustomerRepository.java
 java
 Copy
 Edit
-package com.example.bank.service;
+package com.oracle.bankapp.repository;
 
-import com.example.bank.dto.*;
-import com.example.bank.entity.*;
-import com.example.bank.repository.*;
-import com.example.bank.exception.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.oracle.bankapp.model.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
+    Customer findByLoginId(Long loginId);
+}
+✅ File: repository/AccountBalanceRepository.java
+java
+Copy
+Edit
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.AccountBalance;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AccountBalanceRepository extends JpaRepository<AccountBalance, Long> {
+    AccountBalance findByCustomerId(Long customerId);
+}
+✅ File: repository/BankTransactionRepository.java
+java
+Copy
+Edit
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.BankTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
+    List<BankTransaction> findByCustomerIdOrderByTransactionDateDesc(Long customerId);
+}
+💼 Services
+✅ File: service/BankService.java
+java
+Copy
+Edit
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.model.*;
+import com.oracle.bankapp.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
 
 @Service
 public class BankService {
 
     @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private AccountBalanceRepository accountBalanceRepository;
-    @Autowired
-    private BankTransactionRepository bankTransactionRepository;
-    @Autowired
     private UserLoginRepository userLoginRepository;
+
     @Autowired
-    private AccountTypeRepository accountTypeRepository;
+    private CustomerRepository customerRepository;
 
-    @Transactional
-    public Long login(LoginRequest request) {
-        UserLogin userLogin = userLoginRepository.findByUsernameAndPassword(request.getUsername(), request.getPassword())
-                .orElseThrow(() -> new LoginFailedException("Login failed"));
+    @Autowired
+    private AccountBalanceRepository balanceRepository;
 
-        return userLogin.getLoginId();
+    @Autowired
+    private BankTransactionRepository transactionRepository;
+
+    public boolean login(String username, String password) {
+        return userLoginRepository.findByUsernameAndPassword(username, password).isPresent();
     }
 
-    @Transactional
-    public void createCustomer(CreateCustomerRequest request) {
-        AccountType accountType = accountTypeRepository.findById(request.getAccountTypeId()).orElseThrow(() -> new RuntimeException("Account type not found"));
-        UserLogin userLogin = userLoginRepository.findById(request.getLoginId()).orElseThrow(() -> new RuntimeException("Login ID not found"));
+    public void registerUser(UserLogin userLogin) {
+        userLoginRepository.save(userLogin);
+    }
 
-        Customer customer = new Customer();
-        customer.setName(request.getName());
-        customer.setEmail(request.getEmail());
-        customer.setPhone(request.getPhone());
-        customer.setAddress(request.getAddress());
-        customer.setDob(request.getDob());
-        customer.setAccountType(accountType);
-        customer.setUserLogin(userLogin);
-
+    public void createCustomer(Customer customer) {
         customerRepository.save(customer);
-
-        AccountBalance balance = new AccountBalance();
-        balance.setCustomer(customer);
-        balance.setBalance(0.0); // Starting balance is 0
-        accountBalanceRepository.save(balance);
+        balanceRepository.save(new AccountBalance(customer.getCustomerId(), customer.getCustomerId(), 0.0));
     }
 
-    @Transactional
-    public CustomerInfoResponse getCustomerInfo(Long customerId) {
-        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new UserNotFoundException("Customer not found"));
-
-        CustomerInfoResponse response = new CustomerInfoResponse();
-        response.setName(customer.getName());
-        response.setEmail(customer.getEmail());
-        response.setPhone(customer.getPhone());
-        response.setAddress(customer.getAddress());
-        response.setDob(customer.getDob());
-        response.setAccountType(customer.getAccountType().getAccountType());
-        return response;
+    public Customer viewCustomer(Long customerId) {
+        return customerRepository.findById(customerId).orElse(null);
     }
 
-    @Transactional
-    public void deposit(TransactionRequest request) {
-        Customer customer = customerRepository.findById(request.getCustomerId()).orElseThrow(() -> new UserNotFoundException("Customer not found"));
-        AccountBalance balance = accountBalanceRepository.findByCustomer_CustomerId(request.getCustomerId());
-        if (balance == null) {
-            throw new RuntimeException("Balance not found");
+    public AccountBalance viewBalance(Long customerId) {
+        return balanceRepository.findByCustomerId(customerId);
+    }
+
+    public void deposit(Long customerId, Double amount) {
+        AccountBalance balance = balanceRepository.findByCustomerId(customerId);
+        balance.setBalance(balance.getBalance() + amount);
+        balanceRepository.save(balance);
+        transactionRepository.save(new BankTransaction(null, customerId, "DEPOSIT", amount, new Date()));
+    }
+
+    public void withdraw(Long customerId, Double amount) throws Exception {
+        AccountBalance balance = balanceRepository.findByCustomerId(customerId);
+        if (balance.getBalance() < amount) {
+            throw new Exception("Insufficient balance");
         }
-
-        balance.setBalance(balance.getBalance() + request.getAmount());
-        accountBalanceRepository.save(balance);
-
-        BankTransaction transaction = new BankTransaction();
-        transaction.setCustomer(customer);
-        transaction.setTransactionType("DEPOSIT");
-        transaction.setAmount(request.getAmount());
-        bankTransactionRepository.save(transaction);
+        balance.setBalance(balance.getBalance() - amount);
+        balanceRepository.save(balance);
+        transactionRepository.save(new BankTransaction(null, customerId, "WITHDRAW", amount, new Date()));
     }
 
-    @Transactional
-    public void withdraw(TransactionRequest request) {
-        Customer customer = customerRepository.findById(request.getCustomerId()).orElseThrow(() -> new UserNotFoundException("Customer not found"));
-        AccountBalance balance = accountBalanceRepository.findByCustomer_CustomerId(request.getCustomerId());
-        if (balance == null || balance.getBalance() < request.getAmount()) {
-            throw new InsufficientBalanceException("Insufficient balance");
-        }
-
-        balance.setBalance(balance.getBalance() - request.getAmount());
-        accountBalanceRepository.save(balance);
-
-        BankTransaction transaction = new BankTransaction();
-        transaction.setCustomer(customer);
-        transaction.setTransactionType("WITHDRAW");
-        transaction.setAmount(request.getAmount());
-        bankTransactionRepository.save(transaction);
-    }
-
-    @Transactional
-    public BalanceResponse viewBalance(Long customerId) {
-        AccountBalance balance = accountBalanceRepository.findByCustomer_CustomerId(customerId);
-        if (balance == null) {
-            throw new UserNotFoundException("Customer not found");
-        }
-
-        BalanceResponse response = new BalanceResponse();
-        response.setName(balance.getCustomer().getName());
-        response.setBalance(balance.getBalance());
-        return response;
-    }
-
-    @Transactional
-    public List<BankTransactionResponse> getTransactionHistory(Long customerId) {
-        List<BankTransaction> transactions = bankTransactionRepository.findByCustomer_CustomerId(customerId);
-        return transactions.stream().map(transaction -> {
-            BankTransactionResponse response = new BankTransactionResponse();
-            response.setTransactionType(transaction.getTransactionType());
-            response.setAmount(transaction.getAmount());
-            response.setTransactionDate(transaction.getTransactionDate());
-            return response;
-        }).collect(Collectors.toList());
+    public List<BankTransaction> getTransactionHistory(Long customerId) {
+        return transactionRepository.findByCustomerIdOrderByTransactionDateDesc(customerId);
     }
 }
-18. service/exception/InsufficientBalanceException.java
+🌐 Controllers
+✅ File: controller/BankController.java
 java
 Copy
 Edit
-package com.example.bank.exception;
+package com.oracle.bankapp.controller;
 
-public class InsufficientBalanceException extends RuntimeException {
-    public InsufficientBalanceException(String message) {
-        super(message);
+import com.oracle.bankapp.model.*;
+import com.oracle.bankapp.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/bank")
+public class BankController {
+
+    @Autowired
+    private BankService bankService;
+
+    @PostMapping("/login")
+    public String login(@RequestParam String username, @RequestParam String password) {
+        boolean success = bankService.login(username, password);
+        return success ? "Login successful" : "Invalid credentials";
+    }
+
+    @PostMapping("/register")
+    public String registerUser(@RequestBody UserLogin userLogin) {
+        bankService.registerUser(userLogin);
+        return "User registered successfully";
+    }
+
+    @PostMapping("/createCustomer")
+    public String createCustomer(@RequeBody Customer customer) {
+        bankService.createCustomer(customer);
+        return "Customer created successfully";
+    }
+
+    @GetMapping("/customer/{id}")
+    public Customer viewCustomer(@PathVariable Long id) {
+        return bankService.viewCustomer(id);
+    }
+
+    @GetMapping("/balance/{customerId}")
+    public AccountBalance viewBalance(@PathVariable Long customerId) {
+        return bankService.viewBalance(customerId);
+    }
+
+    @PostMapping("/deposit")
+    public String deposit(@RequestParam Long customerId, @RequestParam Double amount) {
+        bankService.deposit(customerId, amount);
+        return "Amount deposited successfully";
+    }
+
+    @PostMapping("/withdraw")
+    public String withdraw(@RequestParam Long customerId, @RequestParam Double amount) {
+        try {
+            bankService.withdraw(customerId, amount);
+            return "Amount withdrawn successfully";
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    @GetMapping("/transactions/{customerId}")
+    public List<BankTransaction> transactionHistory(@PathVariable Long customerId) {
+        return bankService.getTransactionHistory(customerId);
     }
 }
-19. service/exception/LoginFailedException.java
-java
-Copy
-Edit
-package com.example.bank.exception;
 
-public class LoginFailedException extends RuntimeException {
-    public LoginFailedException(String message) {
-        super(message);
-    }
-}
-20. service/exception/UserNotFoundException.java
-java
-Copy
-Edit
-package com.example.bank.exception;
-
-public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message) {
-        super(message);
-    }
-}
-21. pom.xml
-xml
-Copy
-Edit
-<dependencies>
-    <!-- Spring Boot dependencies -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-thymeleaf</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>com.oracle.database.jdbc</groupId>
-        <artifactId>ojdbc8</artifactId>
-        <version>19.8.0.0</version>
-    </dependency>
-</dependencies>
-Step 3: Testing API in Postman
-Postman Test URLs
-1. Login User
-
-POST: http://localhost:8080/api/login
-
-Body:
-
-json
-Copy
-Edit
-{
-  "username": "user1",
-  "password": "password1"
-}
-2. Create Customer
-
-POST: http://localhost:8080/api/customers
-
-Body:
-
-json
-Copy
-Edit
-{
-  "name": "John Doe",
-  "email": "john.doe@example.com",
-  "phone": "1234567890",
-  "address": "123 Main St",
-  "dob": "1990-01-01",
-  "accountTypeId": 1,
-  "loginId": 1
-}
-3. Get Customer Info
-
-GET: http://localhost:8080/api/customers/{customerId}
-
-4. Deposit Money
-
-POST: http://localhost:8080/api/transactions/deposit
-
-Body:
-
-json
-Copy
-Edit
-{
-  "customerId": 1,
-  "amount": 500
-}
-5. Withdraw Money
-
-POST: http://localhost:8080/api/transactions/withdraw
-
-Body:
-
-json
-Copy
-Edit
-{
-  "customerId": 1,
-  "amount": 100
-}
-6. View Account Balance
-
-GET: http://localhost:8080/api/balance/{customerId}
-
-7. Get Transaction History
-
-GET: http://localhost:8080/api/transactions/{customerId}
+pom.xml
