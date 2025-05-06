@@ -1,0 +1,250 @@
+CompleteBankingSystem/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/com/intern/bank/
+        │   ├── BankApplication.java
+        │   ├── controller/
+        │   │   ├── AuthController.java
+        │   │   └── BankController.java
+        │   ├── exception/
+        │   │   └── CustomException.java
+        │   ├── model/
+        │   │   ├── UserLogin.java
+        │   │   ├── Customer.java
+        │   │   ├── AccountType.java
+        │   │   ├── AccountBalance.java
+        │   │   └── Transaction.java
+        │   ├── repository/
+        │   │   ├── UserLoginRepository.java
+        │   │   ├── CustomerRepository.java
+        │   │   ├── AccountTypeRepository.java
+        │   │   ├── AccountBalanceRepository.java
+        │   │   └── TransactionRepository.java
+        │   └── service/
+        │       ├── AuthService.java
+        │       └── BankService.java
+        └── resources/
+            └── application.properties
+
+
+
+
+
+
+
+
+
+// ✅ BankApplication.java
+package com.intern.bank;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
+}
+
+// ✅ CustomException.java
+package com.intern.bank.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+
+// ✅ UserLogin.java
+package com.intern.bank.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_USER_LOGIN")
+public class UserLogin {
+    @Id
+    @Column(name = "LOGIN_ID")
+    private Long loginId;
+
+    @Column(name = "USERNAME", unique = true)
+    private String username;
+
+    @Column(name = "PASSWORD")
+    private String password;
+
+    // Getters and Setters
+    public Long getLoginId() { return loginId; }
+    public void setLoginId(Long loginId) { this.loginId = loginId; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+// ✅ AccountType.java
+package com.intern.bank.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_TYPE")
+public class AccountType {
+    @Id
+    @Column(name = "ACCOUNT_TYPE_ID")
+    private Long id;
+
+    @Column(name = "ACCOUNT_TYPE")
+    private String accountType;
+
+    @Column(name = "ACCOUNT_DESC")
+    private String description;
+
+    @Column(name = "ACCOUNT_TYPE_CODE")
+    private String code;
+
+    @Column(name = "ACCOUNT_TYPE_COUNTER")
+    private int counter;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getAccountType() { return accountType; }
+    public void setAccountType(String accountType) { this.accountType = accountType; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public int getCounter() { return counter; }
+    public void setCounter(int counter) { this.counter = counter; }
+}
+
+// ✅ Customer.java
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+    @Id
+    @Column(name = "CUSTOMER_ID")
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "LOGIN_ID")
+    private UserLogin login;
+
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_TYPE_ID")
+    private AccountType accountType;
+
+    @Column(name = "NAME")
+    private String name;
+
+    @Column(name = "EMAIL")
+    private String email;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "ADDRESS")
+    private String address;
+
+    @Column(name = "DOB")
+    private LocalDate dob;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public UserLogin getLogin() { return login; }
+    public void setLogin(UserLogin login) { this.login = login; }
+    public AccountType getAccountType() { return accountType; }
+    public void setAccountType(AccountType accountType) { this.accountType = accountType; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public LocalDate getDob() { return dob; }
+    public void setDob(LocalDate dob) { this.dob = dob; }
+}
+
+// ✅ AccountBalance.java
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_BALANCE")
+public class AccountBalance {
+    @Id
+    @Column(name = "BALANCE_ID")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID")
+    private Customer customer;
+
+    @Column(name = "BALANCE")
+    private BigDecimal balance;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+}
+
+// ✅ Transaction.java
+package com.intern.bank.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class Transaction {
+    @Id
+    @Column(name = "TRANSACTION_ID")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "BALANCE_ID")
+    private AccountBalance accountBalance;
+
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
+
+    @Column(name = "AMOUNT")
+    private BigDecimal amount;
+
+    @Column(name = "TRANSACTION_DATE")
+    private LocalDateTime transactionDate;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public AccountBalance getAccountBalance() { return accountBalance; }
+    public void setAccountBalance(AccountBalance accountBalance) { this.accountBalance = accountBalance; }
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public LocalDateTime getTransactionDate() { return transactionDate; }
+    public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+}
