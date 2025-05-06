@@ -1,0 +1,10 @@
+@PostMapping("/customers")
+public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
+    // Validate required fields or add custom logic
+    if (customer.getName() == null || customer.getEmail() == null) {
+        throw new CustomException("Name and Email are required fields.");
+    }
+
+    Customer createdCustomer = bankService.createCustomer(customer);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdCustomer);
+}
