@@ -1,3 +1,428 @@
+ First, Create a Standard Response Format
+java
+// Add this class in your model package
+public class ApiResponse<T> {
+    private boolean success;
+    private String message;
+    private T data;
+
+    // Constructors, Getters & Setters
+    public ApiResponse(boolean success, String message, T data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+    }
+    
+    // Success static factory method
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return new ApiResponse<>(true, message, data);
+    }
+    
+    // Error static factory method
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(false, message, null);
+    }
+}
+2. Update Your BankController
+java
+@RestController
+@RequestMapping("/api/bank")
+public class BankController {
+    
+    @Autowired
+    private BankService bankService;
+
+    // User Registration
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<UserLogin>> registerUser(
+            @RequestParam String username,
+            @RequestParam String password) {
+        
+        try {
+            UserLogin user = bankService.registerUser(username, password);
+            return ResponseEntity.ok(
+                ApiResponse.success("Registration successful", user)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Registration failed: " + e.getMessage())
+            );
+        }
+    }
+
+    // User Login
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<UserLogin>> loginUser(
+            @RequestParam String username,
+            @RequestParam String password) {
+        
+        UserLogin user = bankService.loginUser(username, password);
+        if (user != null) {
+            return ResponseEntity.ok(
+                ApiResponse.success("Login successful", user)
+            );
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ApiResponse.error("Invalid credentials")
+            );
+        }
+    }
+
+    // Create Customer
+    @PostMapping("/customer")
+    public ResponseEntity<ApiResponse<Customer>> createCustomer(
+            @RequestParam Long loginId,
+            @RequestParam String name,
+            @RequestParam String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dob) {
+        
+        try {
+            Customer customer = bankService.createCustomer(loginId, name, email, phone, address, dob);
+            return ResponseEntity.ok(
+                ApiResponse.success("Customer created successfully", customer)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Failed to create customer: " + e.getMessage())
+            );
+        }
+    }
+
+    // Update Customer
+    @PutMapping("/customer/{customerId}")
+    public ResponseEntity<ApiResponse<Customer>> updateCustomer(
+            @PathVariable Long customerId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dob) {
+        
+        try {
+            Customer customer = bankService.updateCustomer(customerId, name, email, phone, address, dob);
+            return ResponseEntity.ok(
+                ApiResponse.success("Customer updated successfully", customer)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Failed to update customer: " + e.getMessage())
+            );
+        }
+    }
+
+    // Deposit Money
+    @PostMapping("/account/{accountId}/deposit")
+    public ResponseEntity<ApiResponse<Account>> deposit(
+            @PathVariable Long accountId,
+            @RequestParam BigDecimal amount) {
+        
+        try {
+            Account account = bankService.deposit(accountId, amount);
+            return ResponseEntity.ok(
+                ApiResponse.success("Deposit successful. New balance: " + account.getBalance(), account)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Deposit failed: " + e.getMessage())
+            );
+        }
+    }
+
+    // Withdraw Money
+    @PostMapping("/account/{accountId}/withdraw")
+    public ResponseEntity<ApiResponse<Account>> withdraw(
+            @PathVariable Long accountId,
+            @RequestParam BigDecimal amount) {
+        
+        try {
+            Account account = bankService.withdraw(accountId, amount);
+            return ResponseEntity.ok(
+                ApiResponse.success("Withdrawal successful. New balance: " + account.getBalance(), account)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Withdrawal failed: " + e.getMessage())
+            );
+        }
+    }
+}
+3. Update Your BankService Methods to Throw Exceptions
+java
+// Example for loginUser
+public UserLogin loginUser(String username, String password) {
+    UserLogin user = userLoginRepository.findByUsername(username);
+    if (user == null || !user.getPassword().equals(password)) {
+        throw new RuntimeException("Invalid username or password");
+    }
+    return user;
+}
+
+// Example for withdraw
+public Account withdraw(Long accountId, BigDecimal amount) {
+    Account account = accountRepository.findById(accountId)
+        .orElseThrow(() -> new RuntimeException("Account not found"));
+    
+    if (account.getBalance().compareTo(amount) < 0) {
+        throw new RuntimeException("Insufficient balance");
+    }
+    
+    account.setBalance(account.getBalance().subtract(amount));
+    return accountRepository.save(account);
+}
+4. Expected Postman Responses
+Successful Registration:
+
+json
+{
+  "success": true,
+  "message": "Registration successful",
+  "data": {
+    "loginId": 1,
+    "username": "john_doe",
+    "password": "hashed_password"
+  }
+}
+Failed Login:
+
+json
+{
+  "success": false,
+  "message": "Invalid credentials",
+  "data": null
+}
+Successful Deposit:
+
+json
+{
+  "success": true,
+  "message": "Deposit successful. New balance: 1500.00",
+  "data": {
+    "accountId": 1,
+    "balance": 1500.00
+  }
+}
+Failed Withdrawal (Insufficient Balance):
+
+json
+{
+  "success": false,
+  "message": "Withdrawal failed: Insufficient balance",
+  "data": null
+}
+5. Additional Improvements
+Custom Exceptions (Recommended):
+
+java
+public class InsufficientBalanceException extends RuntimeException {
+    public InsufficientBalanceException(String message) {
+        super(message);
+    }
+}
+
+// Then use it in service:
+throw new InsufficientBalanceException("Insufficient balance for withdrawal");
+Global Exception Handler:
+
+java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<?>> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+    
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ApiResponse<?>> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+}
+This implementation gives you:
+
+Consistent response format across all endpoints
+
+Clear success/error messages in Postman
+
+Proper error handling for all scenarios
+
+Detailed feedback for frontend applications
+
+Would you like me to add any specific messages for other operations like account creation or transaction history?
+
+for account creation also do same
+Here's how to implement clear success/error messages for account creation, following the same pattern as other operations:
+
+1. Update the BankController.java
+java
+// Account Creation Endpoint
+@PostMapping("/account")
+public ResponseEntity<ApiResponse<Account>> createAccount(
+        @RequestParam Long customerId,
+        @RequestParam Long accountTypeId) {
+    
+    try {
+        Account account = bankService.createAccount(customerId, accountTypeId);
+        return ResponseEntity.ok(
+            ApiResponse.success("Account created successfully", account)
+        );
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(
+            ApiResponse.error("Account creation failed: " + e.getMessage())
+        );
+    }
+}
+2. Enhance the BankService.java
+java
+@Transactional
+public Account createAccount(Long customerId, Long accountTypeId) {
+    // 1. Validate customer exists
+    Customer customer = customerRepository.findById(customerId)
+        .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerId));
+    
+    // 2. Validate account type exists
+    AccountType accountType = accountTypeRepository.findById(accountTypeId)
+        .orElseThrow(() -> new RuntimeException("Invalid account type"));
+    
+    // 3. Create new account
+    Account account = new Account();
+    account.setCustomer(customer);
+    account.setAccountType(accountType);
+    account.setBalance(BigDecimal.ZERO);
+    
+    // 4. Save and return
+    return accountRepository.save(account);
+}
+3. Expected Postman Responses
+Successful Account Creation:
+
+json
+{
+  "success": true,
+  "message": "Account created successfully",
+  "data": {
+    "accountId": 101,
+    "customer": {
+      "customerId": 1,
+      "name": "John Doe"
+    },
+    "accountType": {
+      "accountTypeId": 1,
+      "accountType": "SAVINGS"
+    },
+    "balance": 0.00
+  }
+}
+Failed Cases:
+
+Invalid Customer ID:
+
+json
+{
+  "success": false,
+  "message": "Account creation failed: Customer not found with ID: 999",
+  "data": null
+}
+Invalid Account Type:
+
+json
+{
+  "success": false,
+  "message": "Account creation failed: Invalid account type",
+  "data": null
+}
+4. Additional Improvements
+Custom Exception Classes (Recommended):
+
+java
+// Add these in your exception package
+public class CustomerNotFoundException extends RuntimeException {
+    public CustomerNotFoundException(Long customerId) {
+        super("Customer not found with ID: " + customerId);
+    }
+}
+
+public class InvalidAccountTypeException extends RuntimeException {
+    public InvalidAccountTypeException() {
+        super("Invalid account type");
+    }
+}
+
+// Update service method
+public Account createAccount(Long customerId, Long accountTypeId) {
+    Customer customer = customerRepository.findById(customerId)
+        .orElseThrow(() -> new CustomerNotFoundException(customerId));
+    
+    AccountType accountType = accountTypeRepository.findById(accountTypeId)
+        .orElseThrow(InvalidAccountTypeException::new);
+    
+    // ... rest of the method
+}
+Global Exception Handler Update:
+
+java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(CustomerNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleCustomerNotFound(CustomerNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+    
+    @ExceptionHandler(InvalidAccountTypeException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidAccountType(InvalidAccountTypeException ex) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+}
+5. Testing in Postman
+Request:
+
+POST http://localhost:8080/api/bank/account?customerId=1&accountTypeId=1
+Possible Responses:
+
+Success (HTTP 200):
+
+json
+{
+  "success": true,
+  "message": "Account created successfully",
+  "data": {
+    "accountId": 101,
+    "balance": 0.00,
+    "accountType": "SAVINGS"
+  }
+}
+Customer Not Found (HTTP 404):
+
+json
+{
+  "success": false,
+  "message": "Customer not found with ID: 999",
+  "data": null
+}
+Invalid Account Type (HTTP 400):
+
+json
+{
+  "success": false,
+  "message": "Invalid account type",
+  "data": null
+}
+
+
+
+
+
+
+
+
+
+
 @PostMapping("/customer")
 public ResponseEntity<Customer> createCustomer(
         @RequestParam Long loginId,
