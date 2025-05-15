@@ -1,3 +1,36 @@
+@PostMapping("/customer")
+public ResponseEntity<Customer> createCustomer(
+        @RequestParam Long loginId,
+        @RequestParam String name,
+        @RequestParam String email,
+        @RequestParam(required = false) String phone,
+        @RequestParam(required = false) String address,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dob) {
+    
+    Customer customer = bankService.createCustomer(loginId, name, email, phone, address, dob);
+    return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.badRequest().build();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @Service
 public class BankService {
 
