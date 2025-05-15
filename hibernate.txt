@@ -73,6 +73,777 @@ CREATE TABLE INTERN_BANK_TRANSACTION (
 
 
 
+3. Model Classes
+UserLogin.java
+java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_USER_LOGIN")
+public class UserLogin {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "LOGIN_ID")
+    private Long loginId;
+    
+    @Column(name = "USERNAME", unique = true, nullable = false)
+    private String username;
+    
+    @Column(name = "PASSWORD", nullable = false)
+    private String password;
+    
+    // Getters and Setters
+    public Long getLoginId() {
+        return loginId;
+    }
+    
+    public void setLoginId(Long loginId) {
+        this.loginId = loginId;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+Customer.java
+java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "CUSTOMER_ID")
+    private Long customerId;
+    
+    @OneToOne
+    @JoinColumn(name = "LOGIN_ID", referencedColumnName = "LOGIN_ID")
+    private UserLogin userLogin;
+    
+    @Column(name = "NAME", nullable = false)
+    private String name;
+    
+    @Column(name = "EMAIL", nullable = false)
+    private String email;
+    
+    @Column(name = "PHONE")
+    private String phone;
+    
+    @Column(name = "ADDRESS")
+    private String address;
+    
+    @Column(name = "DOB")
+    @Temporal(TemporalType.DATE)
+    private Date dob;
+    
+    // Getters and Setters
+    public Long getCustomerId() {
+        return customerId;
+    }
+    
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+    
+    public UserLogin getUserLogin() {
+        return userLogin;
+    }
+    
+    public void setUserLogin(UserLogin userLogin) {
+        this.userLogin = userLogin;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public Date getDob() {
+        return dob;
+    }
+    
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+}
+AccountType.java
+java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_TYPE")
+public class AccountType {
+    
+    @Id
+    @Column(name = "ACCOUNT_TYPE_ID")
+    private Long accountTypeId;
+    
+    @Column(name = "ACCOUNT_TYPE", nullable = false)
+    private String accountType;
+    
+    @Column(name = "ACCOUNT_DESC")
+    private String accountDesc;
+    
+    @Column(name = "ACCOUNT_TYPE_CODE")
+    private String accountTypeCode;
+    
+    // Getters and Setters
+    public Long getAccountTypeId() {
+        return accountTypeId;
+    }
+    
+    public void setAccountTypeId(Long accountTypeId) {
+        this.accountTypeId = accountTypeId;
+    }
+    
+    public String getAccountType() {
+        return accountType;
+    }
+    
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
+    }
+    
+    public String getAccountDesc() {
+        return accountDesc;
+    }
+    
+    public void setAccountDesc(String accountDesc) {
+        this.accountDesc = accountDesc;
+    }
+    
+    public String getAccountTypeCode() {
+        return accountTypeCode;
+    }
+    
+    public void setAccountTypeCode(String accountTypeCode) {
+        this.accountTypeCode = accountTypeCode;
+    }
+}
+Account.java
+java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT")
+public class Account {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "ACCOUNT_ID")
+    private Long accountId;
+    
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID", nullable = false)
+    private Customer customer;
+    
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_TYPE_ID", nullable = false)
+    private AccountType accountType;
+    
+    @Column(name = "BALANCE", columnDefinition = "NUMBER(15,2) default 0.00")
+    private BigDecimal balance;
+    
+    // Getters and Setters
+    public Long getAccountId() {
+        return accountId;
+    }
+    
+    public void setAccountId(Long accountId) {
+        this.accountId = accountId;
+    }
+    
+    public Customer getCustomer() {
+        return customer;
+    }
+    
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+    
+    public AccountType getAccountType() {
+        return accountType;
+    }
+    
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
+    
+    public BigDecimal getBalance() {
+        return balance;
+    }
+    
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+}
+BankTransaction.java
+java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class BankTransaction {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "TRANSACTION_ID")
+    private Long transactionId;
+    
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_ID", nullable = false)
+    private Account account;
+    
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
+    
+    @Column(name = "AMOUNT")
+    private BigDecimal amount;
+    
+    @Column(name = "TRANSACTION_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date transactionDate;
+    
+    @Column(name = "REFERENCE_NO")
+    private String referenceNo;
+    
+    // Getters and Setters
+    public Long getTransactionId() {
+        return transactionId;
+    }
+    
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
+    }
+    
+    public Account getAccount() {
+        return account;
+    }
+    
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+    
+    public String getTransactionType() {
+        return transactionType;
+    }
+    
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+    
+    public BigDecimal getAmount() {
+        return amount;
+    }
+    
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+    
+    public Date getTransactionDate() {
+        return transactionDate;
+    }
+    
+    public void setTransactionDate(Date transactionDate) {
+        this.transactionDate = transactionDate;
+    }
+    
+    public String getReferenceNo() {
+        return referenceNo;
+    }
+    
+    public void setReferenceNo(String referenceNo) {
+        this.referenceNo = referenceNo;
+    }
+}
+4. Repository Interfaces
+UserLoginRepository.java
+java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.UserLogin;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
+    UserLogin findByUsername(String username);
+}
+CustomerRepository.java
+java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
+    Customer findByUserLogin_LoginId(Long loginId);
+}
+AccountRepository.java
+java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.Account;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    List<Account> findByCustomer_CustomerId(Long customerId);
+}
+BankTransactionRepository.java
+java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.BankTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
+    List<BankTransaction> findByAccount_AccountId(Long accountId);
+}
+5. Service Layer
+BankService.java
+java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.model.*;
+import com.oracle.bankapp.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+@Service
+public class BankService {
+    
+    @Autowired
+    private UserLoginRepository userLoginRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    @Autowired
+    private AccountRepository accountRepository;
+    
+    @Autowired
+    private BankTransactionRepository transactionRepository;
+    
+    @Autowired
+    private AccountTypeRepository accountTypeRepository;
+    
+    // User Registration
+    @Transactional
+    public UserLogin registerUser(String username, String password) {
+        UserLogin user = new UserLogin();
+        user.setUsername(username);
+        user.setPassword(password); // In production, encrypt the password
+        return userLoginRepository.save(user);
+    }
+    
+    // User Login
+    public UserLogin loginUser(String username, String password) {
+        UserLogin user = userLoginRepository.findByUsername(username);
+        if (user != null && user.getPassword().equals(password)) {
+            return user;
+        }
+        return null;
+    }
+    
+    // Create Customer
+    @Transactional
+    public Customer createCustomer(Long loginId, String name, String email, String phone, String address, Date dob) {
+        UserLogin user = userLoginRepository.findById(loginId).orElse(null);
+        if (user == null) {
+            return null;
+        }
+        
+        Customer customer = new Customer();
+        customer.setUserLogin(user);
+        customer.setName(name);
+        customer.setEmail(email);
+        customer.setPhone(phone);
+        customer.setAddress(address);
+        customer.setDob(dob);
+        
+        return customerRepository.save(customer);
+    }
+    
+    // Update Customer Details
+    @Transactional
+    public Customer updateCustomer(Long customerId, String name, String email, String phone, String address, Date dob) {
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        if (customer == null) {
+            return null;
+        }
+        
+        customer.setName(name);
+        customer.setEmail(email);
+        customer.setPhone(phone);
+        customer.setAddress(address);
+        customer.setDob(dob);
+        
+        return customerRepository.save(customer);
+    }
+    
+    // View Customer Info
+    public Customer getCustomerInfo(Long customerId) {
+        return customerRepository.findById(customerId).orElse(null);
+    }
+    
+    // Create Account
+    @Transactional
+    public Account createAccount(Long customerId, Long accountTypeId) {
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        AccountType accountType = accountTypeRepository.findById(accountTypeId).orElse(null);
+        
+        if (customer == null || accountType == null) {
+            return null;
+        }
+        
+        Account account = new Account();
+        account.setCustomer(customer);
+        account.setAccountType(accountType);
+        account.setBalance(BigDecimal.ZERO);
+        
+        return accountRepository.save(account);
+    }
+    
+    // Deposit Money
+    @Transactional
+    public Account deposit(Long accountId, BigDecimal amount) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account == null) {
+            return null;
+        }
+        
+        account.setBalance(account.getBalance().add(amount));
+        accountRepository.save(account);
+        
+        // Create transaction record
+        BankTransaction transaction = new BankTransaction();
+        transaction.setAccount(account);
+        transaction.setTransactionType("DEPOSIT");
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(new Date());
+        transaction.setReferenceNo(generateReferenceNo("DEP"));
+        transactionRepository.save(transaction);
+        
+        return account;
+    }
+    
+    // Withdraw Money
+    @Transactional
+    public Account withdraw(Long accountId, BigDecimal amount) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account == null || account.getBalance().compareTo(amount) < 0) {
+            return null;
+        }
+        
+        account.setBalance(account.getBalance().subtract(amount));
+        accountRepository.save(account);
+        
+        // Create transaction record
+        BankTransaction transaction = new BankTransaction();
+        transaction.setAccount(account);
+        transaction.setTransactionType("WITHDRAW");
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(new Date());
+        transaction.setReferenceNo(generateReferenceNo("WITH"));
+        transactionRepository.save(transaction);
+        
+        return account;
+    }
+    
+    // View Balance
+    public BigDecimal getBalance(Long accountId) {
+        Account account = accountRepository.findById(accountId).orElse(null);
+        return account != null ? account.getBalance() : null;
+    }
+    
+    // View Transaction History
+    public List<BankTransaction> getTransactionHistory(Long accountId) {
+        return transactionRepository.findByAccount_AccountId(accountId);
+    }
+    
+    // Helper method to generate reference number
+    private String generateReferenceNo(String prefix) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timestamp = sdf.format(new Date());
+        Random random = new Random();
+        int randomNum = random.nextInt(9000) + 1000; // 4-digit random number
+        return prefix + timestamp + randomNum;
+    }
+}
+6. Controller Layer
+BankController.java
+java
+package com.oracle.bankapp.controller;
+
+import com.oracle.bankapp.model.*;
+import com.oracle.bankapp.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/bank")
+public class BankController {
+    
+    @Autowired
+    private BankService bankService;
+    
+    // User Registration
+    @PostMapping("/register")
+    public ResponseEntity<UserLogin> registerUser(
+            @RequestParam String username,
+            @RequestParam String password) {
+        UserLogin user = bankService.registerUser(username, password);
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.badRequest().build();
+    }
+    
+    // User Login
+    @PostMapping("/login")
+    public ResponseEntity<UserLogin> loginUser(
+            @RequestParam String username,
+            @RequestParam String password) {
+        UserLogin user = bankService.loginUser(username, password);
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.badRequest().build();
+    }
+    
+    // Create Customer
+    @PostMapping("/customer")
+    public ResponseEntity<Customer> createCustomer(
+            @RequestParam Long loginId,
+            @RequestParam String name,
+            @RequestParam String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) Date dob) {
+        Customer customer = bankService.createCustomer(loginId, name, email, phone, address, dob);
+        return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.badRequest().build();
+    }
+    
+    // Update Customer Details
+    @PutMapping("/customer/{customerId}")
+    public ResponseEntity<Customer> updateCustomer(
+            @PathVariable Long customerId,
+            @RequestParam String name,
+            @RequestParam String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) Date dob) {
+        Customer customer = bankService.updateCustomer(customerId, name, email, phone, address, dob);
+        return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.badRequest().build();
+    }
+    
+    // View Customer Info
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<Customer> getCustomerInfo(@PathVariable Long customerId) {
+        Customer customer = bankService.getCustomerInfo(customerId);
+        return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.notFound().build();
+    }
+    
+    // Create Account
+    @PostMapping("/account")
+    public ResponseEntity<Account> createAccount(
+            @RequestParam Long customerId,
+            @RequestParam Long accountTypeId) {
+        Account account = bankService.createAccount(customerId, accountTypeId);
+        return account != null ? ResponseEntity.ok(account) : ResponseEntity.badRequest().build();
+    }
+    
+    // Deposit Money
+    @PostMapping("/account/{accountId}/deposit")
+    public ResponseEntity<Account> deposit(
+            @PathVariable Long accountId,
+            @RequestParam BigDecimal amount) {
+        Account account = bankService.deposit(accountId, amount);
+        return account != null ? ResponseEntity.ok(account) : ResponseEntity.badRequest().build();
+    }
+    
+    // Withdraw Money
+    @PostMapping("/account/{accountId}/withdraw")
+    public ResponseEntity<Account> withdraw(
+            @PathVariable Long accountId,
+            @RequestParam BigDecimal amount) {
+        Account account = bankService.withdraw(accountId, amount);
+        return account != null ? ResponseEntity.ok(account) : ResponseEntity.badRequest().build();
+    }
+    
+    // View Balance
+    @GetMapping("/account/{accountId}/balance")
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long accountId) {
+        BigDecimal balance = bankService.getBalance(accountId);
+        return balance != null ? ResponseEntity.ok(balance) : ResponseEntity.notFound().build();
+    }
+    
+    // View Transaction History
+    @GetMapping("/account/{accountId}/transactions")
+    public ResponseEntity<List<BankTransaction>> getTransactionHistory(@PathVariable Long accountId) {
+        List<BankTransaction> transactions = bankService.getTransactionHistory(accountId);
+        return ResponseEntity.ok(transactions);
+    }
+}
+7. Main Application Class
+BankApplication.java
+java
+package com.oracle.bankapp;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
+}
+Testing with Postman
+Here are some sample requests you can test in Postman:
+
+User Registration
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/register
+
+Params: username, password
+
+User Login
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/login
+
+Params: username, password
+
+Create Customer
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/customer
+
+Params: loginId, name, email, phone, address, dob
+
+Create Account
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/account
+
+Params: customerId, accountTypeId (1 for Savings, 2 for Current)
+
+Deposit Money
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/account/{accountId}/deposit
+
+Params: amount
+
+Withdraw Money
+
+Method: POST
+
+URL: http://localhost:8080/api/bank/account/{accountId}/withdraw
+
+Params: amount
+
+View Balance
+
+Method: GET
+
+URL: http://localhost:8080/api/bank/account/{accountId}/balance
+
+View Transaction History
+
+Method: GET
+
+URL: http://localhost:8080/api/bank/account/{accountId}/transactions
+
+
+
+
+
+
+
+
+
+
+
 
 
 
