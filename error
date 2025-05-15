@@ -1,4 +1,161 @@
- First, Create a Standard Response Format
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. User Registration (BankController.java)
+java
+@PostMapping("/register")
+public ResponseEntity<String> registerUser(
+        @RequestParam String username,
+        @RequestParam String password) {
+    
+    if (userLoginRepository.findByUsername(username) != null) {
+        return ResponseEntity.badRequest().body("Username already exists");
+    }
+    
+    UserLogin user = new UserLogin();
+    user.setUsername(username);
+    user.setPassword(password); // Remember to hash in production
+    userLoginRepository.save(user);
+    
+    return ResponseEntity.ok("Registration successful");
+}
+2. User Login (BankController.java)
+java
+@PostMapping("/login")
+public ResponseEntity<String> loginUser(
+        @RequestParam String username,
+        @RequestParam String password) {
+    
+    UserLogin user = userLoginRepository.findByUsername(username);
+    if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username");
+    }
+    
+    if (!user.getPassword().equals(password)) { // Use passwordEncoder.matches() in production
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
+    }
+    
+    return ResponseEntity.ok("Login successful");
+}
+3. Customer Creation (BankController.java)
+java
+@PostMapping("/customers")
+public ResponseEntity<String> createCustomer(
+        @RequestParam Long loginId,
+        @RequestParam String name,
+        @RequestParam String email) {
+    
+    if (customerRepository.existsByEmail(email)) {
+        return ResponseEntity.badRequest().body("Email already registered");
+    }
+    
+    Customer customer = new Customer();
+    // Set fields...
+    customerRepository.save(customer);
+    
+    return ResponseEntity.ok("Customer created successfully");
+}
+4. Customer Update (BankController.java)
+java
+@PutMapping("/customers/{id}")
+public ResponseEntity<String> updateCustomer(
+        @PathVariable Long id,
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) String email) {
+    
+    Customer customer = customerRepository.findById(id).orElse(null);
+    if (customer == null) {
+        return ResponseEntity.badRequest().body("Customer not found");
+    }
+    
+    if (email != null && customerRepository.existsByEmailAndIdNot(email, id)) {
+        return ResponseEntity.badRequest().body("Email already in use by another customer");
+    }
+    
+    // Update fields...
+    customerRepository.save(customer);
+    
+    return ResponseEntity.ok("Customer updated successfully");
+}
+5. Account Operations (BankController.java)
+java
+// Deposit
+@PostMapping("/accounts/{accountId}/deposit")
+public ResponseEntity<String> deposit(
+        @PathVariable Long accountId,
+        @RequestParam BigDecimal amount) {
+    
+    Account account = accountRepository.findById(accountId).orElse(null);
+    if (account == null) {
+        return ResponseEntity.badRequest().body("Account not found");
+    }
+    
+    account.setBalance(account.getBalance().add(amount));
+    accountRepository.save(account);
+    
+    return ResponseEntity.ok("Deposit successful. New balance: " + account.getBalance());
+}
+
+// Withdrawal
+@PostMapping("/accounts/{accountId}/withdraw")
+public ResponseEntity<String> withdraw(
+        @PathVariable Long accountId,
+        @RequestParam BigDecimal amount) {
+    
+    Account account = accountRepository.findById(accountId).orElse(null);
+    if (account == null) {
+        return ResponseEntity.badRequest().body("Account not found");
+    }
+    
+    if (account.getBalance().compareTo(amount) < 0) {
+        return ResponseEntity.badRequest().body("Insufficient balance");
+    }
+    
+    account.setBalance(account.getBalance().subtract(amount));
+    accountRepository.save(account);
+    
+    return ResponseEntity.ok("Withdrawal successful. New balance: " + account.getBalance());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+First, Create a Standard Response Format
 java
 // Add this class in your model package
 public class ApiResponse<T> {
