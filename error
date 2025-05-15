@@ -1,4 +1,132 @@
+1. User Registration & Login
+java
+// User Registration
+@PostMapping("/register")
+public ResponseEntity<String> registerUser(
+        @RequestParam String username,
+        @RequestParam String password) {
+    try {
+        UserLogin user = bankService.registerUser(username, password);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Registration successful for username: " + username);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body("Registration failed: " + e.getMessage());
+    }
+}
 
+// User Login
+@PostMapping("/login")
+public ResponseEntity<String> loginUser(
+        @RequestParam String username,
+        @RequestParam String password) {
+    UserLogin user = bankService.loginUser(username, password);
+    if (user != null) {
+        return ResponseEntity.ok("Login successful for username: " + username);
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Login failed: Invalid credentials");
+    }
+}
+2. Customer Operations
+java
+// Create Customer
+@PostMapping("/customers")
+public ResponseEntity<String> createCustomer(
+        @RequestParam Long loginId,
+        @RequestParam String name,
+        @RequestParam String email,
+        @RequestParam(required = false) String phone,
+        @RequestParam(required = false) String address,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dob) {
+    try {
+        Customer customer = bankService.createCustomer(loginId, name, email, phone, address, dob);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Customer created successfully with ID: " + customer.getCustomerId());
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body("Customer creation failed: " + e.getMessage());
+    }
+}
+
+// Update Customer
+@PutMapping("/customers/{customerId}")
+public ResponseEntity<String> updateCustomer(
+        @PathVariable Long customerId,
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) String email,
+        @RequestParam(required = false) String phone,
+        @RequestParam(required = false) String address,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dob) {
+    try {
+        Customer updated = bankService.updateCustomer(customerId, name, email, phone, address, dob);
+        return ResponseEntity.ok("Customer updated successfully");
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Update failed: " + e.getMessage());
+    }
+}
+3. Account Operations
+java
+// Create Account
+@PostMapping("/accounts")
+public ResponseEntity<String> createAccount(
+        @RequestParam Long customerId,
+        @RequestParam Long accountTypeId) {
+    try {
+        Account account = bankService.createAccount(customerId, accountTypeId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Account created successfully with ID: " + account.getAccountId() + 
+                     " and type: " + account.getAccountType().getAccountType());
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body("Account creation failed: " + e.getMessage());
+    }
+}
+4. Transaction Operations
+java
+// Deposit Money
+@PostMapping("/accounts/{accountId}/deposit")
+public ResponseEntity<String> deposit(
+        @PathVariable Long accountId,
+        @RequestParam BigDecimal amount) {
+    try {
+        Account account = bankService.deposit(accountId, amount);
+        return ResponseEntity.ok(String.format(
+            "Deposit successful. New balance: %.2f", account.getBalance()));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body("Deposit failed: " + e.getMessage());
+    }
+}
+
+// Withdraw Money
+@PostMapping("/accounts/{accountId}/withdraw")
+public ResponseEntity<String> withdraw(
+        @PathVariable Long accountId,
+        @RequestParam BigDecimal amount) {
+    try {
+        Account account = bankService.withdraw(accountId, amount);
+        return ResponseEntity.ok(String.format(
+            "Withdrawal successful. New balance: %.2f", account.getBalance()));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body("Withdrawal failed: " + e.getMessage());
+    }
+}
+5. View Operations
+java
+// View Balance
+@GetMapping("/accounts/{accountId}/balance")
+public ResponseEntity<String> getBalance(@PathVariable Long accountId) {
+    try {
+        BigDecimal balance = bankService.getBalance(accountId);
+        return ResponseEntity.ok(String.format("Current balance: %.2f", balance));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Balance check failed: " + e.getMessage());
+    }
+}
 
 
 
