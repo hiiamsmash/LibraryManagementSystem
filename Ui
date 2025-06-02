@@ -1,0 +1,1745 @@
+# Bank Management System with Spring Boot, Hibernate, and Oracle 10g
+
+I'll create a comprehensive bank management system with all the requested functionalities. Here's the complete implementation:
+
+## 1. Project Structure
+
+```
+src/
+└── main/
+    ├── java/
+    │   └── com/
+    │       └── oracle/
+    │           └── bankapp/
+    │               ├── BankApplication.java
+    │               ├── config/
+    │               │   └── SecurityConfig.java
+    │               ├── model/
+    │               │   ├── UserLogin.java
+    │               │   ├── Customer.java
+    │               │   ├── AccountType.java
+    │               │   ├── Account.java
+    │               │   └── BankTransaction.java
+    │               ├── repository/
+    │               │   ├── UserLoginRepository.java
+    │               │   ├── CustomerRepository.java
+    │               │   ├── AccountTypeRepository.java
+    │               │   ├── AccountRepository.java
+    │               │   └── BankTransactionRepository.java
+    │               ├── service/
+    │               │   ├── AuthService.java
+    │               │   ├── CustomerService.java
+    │               │   ├── AccountService.java
+    │               │   └── TransactionService.java
+    │               ├── controller/
+    │               │   ├── AuthController.java
+    │               │   ├── CustomerController.java
+    │               │   ├── AccountController.java
+    │               │   └── TransactionController.java
+    │               ├── dto/
+    │               │   ├── LoginRequest.java
+    │               │   ├── RegisterRequest.java
+    │               │   ├── CustomerDTO.java
+    │               │   ├── AccountDTO.java
+    │               │   └── TransactionDTO.java
+    │               └── exception/
+    │                   ├── UserAlreadyExistsException.java
+    │                   ├── CustomerNotFoundException.java
+    │                   ├── AccountNotFoundException.java
+    │                   └── InsufficientBalanceException.java
+    └── resources/
+        ├── static/
+        │   ├── css/
+        │   │   └── style.css
+        │   └── js/
+        │       └── script.js
+        ├── templates/
+        │   ├── login.html
+        │   ├── register.html
+        │   ├── dashboard.html
+        │   ├── customer/
+        │   │   ├── create.html
+        │   │   ├── edit.html
+        │   │   └── view.html
+        │   ├── account/
+        │   │   ├── create.html
+        │   │   ├── view.html
+        │   │   └── balance.html
+        │   └── transaction/
+        │       ├── deposit.html
+        │       ├── withdraw.html
+        │       └── history.html
+        └── application.properties
+```
+
+## 2. Maven Dependencies (pom.xml)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.0</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.oracle</groupId>
+    <artifactId>bank-management-system</artifactId>
+    <version>1.0.0</version>
+    <name>Bank Management System</name>
+    
+    <properties>
+        <java.version>11</java.version>
+    </properties>
+    
+    <dependencies>
+        <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        
+        <!-- Oracle JDBC Driver -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc7</artifactId>
+            <version>12.1.0.2</version>
+        </dependency>
+        
+        <!-- Hibernate -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+        </dependency>
+        
+        <!-- Other Utilities -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+## 3. Model Classes
+
+### UserLogin.java
+```java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_USER_LOGIN")
+public class UserLogin {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "login_seq")
+    @SequenceGenerator(name = "login_seq", sequenceName = "LOGIN_SEQ", allocationSize = 1)
+    @Column(name = "LOGIN_ID")
+    private Long loginId;
+    
+    @Column(name = "USERNAME", unique = true, nullable = false)
+    private String username;
+    
+    @Column(name = "PASSWORD", nullable = false)
+    private String password;
+    
+    @OneToOne(mappedBy = "userLogin", cascade = CascadeType.ALL)
+    private Customer customer;
+    
+    // Getters and Setters
+    public Long getLoginId() {
+        return loginId;
+    }
+    
+    public void setLoginId(Long loginId) {
+        this.loginId = loginId;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    public Customer getCustomer() {
+        return customer;
+    }
+    
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+}
+```
+
+### Customer.java
+```java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_CUSTOMER")
+public class Customer {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_seq")
+    @SequenceGenerator(name = "customer_seq", sequenceName = "CUSTOMER_SEQ", allocationSize = 1)
+    @Column(name = "CUSTOMER_ID")
+    private Long customerId;
+    
+    @OneToOne
+    @JoinColumn(name = "LOGIN_ID", unique = true)
+    private UserLogin userLogin;
+    
+    @Column(name = "NAME", nullable = false)
+    private String name;
+    
+    @Column(name = "EMAIL", nullable = false)
+    private String email;
+    
+    @Column(name = "PHONE")
+    private String phone;
+    
+    @Column(name = "ADDRESS")
+    private String address;
+    
+    @Column(name = "DOB")
+    @Temporal(TemporalType.DATE)
+    private Date dob;
+    
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private Set<Account> accounts;
+    
+    // Getters and Setters
+    public Long getCustomerId() {
+        return customerId;
+    }
+    
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+    
+    public UserLogin getUserLogin() {
+        return userLogin;
+    }
+    
+    public void setUserLogin(UserLogin userLogin) {
+        this.userLogin = userLogin;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public Date getDob() {
+        return dob;
+    }
+    
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+    
+    public Set<Account> getAccounts() {
+        return accounts;
+    }
+    
+    public void setAccounts(Set<Account> accounts) {
+        this.accounts = accounts;
+    }
+}
+```
+
+### AccountType.java
+```java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT_TYPE")
+public class AccountType {
+    
+    @Id
+    @Column(name = "ACCOUNT_TYPE_ID")
+    private Long accountTypeId;
+    
+    @Column(name = "ACCOUNT_TYPE", nullable = false)
+    private String accountType;
+    
+    @Column(name = "ACCOUNT_DESC")
+    private String accountDesc;
+    
+    @Column(name = "ACCOUNT_TYPE_CODE")
+    private String accountTypeCode;
+    
+    // Getters and Setters
+    public Long getAccountTypeId() {
+        return accountTypeId;
+    }
+    
+    public void setAccountTypeId(Long accountTypeId) {
+        this.accountTypeId = accountTypeId;
+    }
+    
+    public String getAccountType() {
+        return accountType;
+    }
+    
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
+    }
+    
+    public String getAccountDesc() {
+        return accountDesc;
+    }
+    
+    public void setAccountDesc(String accountDesc) {
+        this.accountDesc = accountDesc;
+    }
+    
+    public String getAccountTypeCode() {
+        return accountTypeCode;
+    }
+    
+    public void setAccountTypeCode(String accountTypeCode) {
+        this.accountTypeCode = accountTypeCode;
+    }
+}
+```
+
+### Account.java
+```java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.util.Set;
+
+@Entity
+@Table(name = "INTERN_ACCOUNT")
+public class Account {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_seq")
+    @SequenceGenerator(name = "account_seq", sequenceName = "ACCOUNT_SEQ", allocationSize = 1)
+    @Column(name = "ACCOUNT_NUMBER")
+    private Long accountNumber;
+    
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID", nullable = false)
+    private Customer customer;
+    
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_TYPE_ID", nullable = false)
+    private AccountType accountType;
+    
+    @Column(name = "BALANCE")
+    private BigDecimal balance;
+    
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    private Set<BankTransaction> transactions;
+    
+    // Getters and Setters
+    public Long getAccountNumber() {
+        return accountNumber;
+    }
+    
+    public void setAccountNumber(Long accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+    
+    public Customer getCustomer() {
+        return customer;
+    }
+    
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+    
+    public AccountType getAccountType() {
+        return accountType;
+    }
+    
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
+    
+    public BigDecimal getBalance() {
+        return balance;
+    }
+    
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+    
+    public Set<BankTransaction> getTransactions() {
+        return transactions;
+    }
+    
+    public void setTransactions(Set<BankTransaction> transactions) {
+        this.transactions = transactions;
+    }
+}
+```
+
+### BankTransaction.java
+```java
+package com.oracle.bankapp.model;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Entity
+@Table(name = "INTERN_BANK_TRANSACTION")
+public class BankTransaction {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq")
+    @SequenceGenerator(name = "transaction_seq", sequenceName = "TRANSACTION_SEQ", allocationSize = 1)
+    @Column(name = "TRANSACTION_ID")
+    private Long transactionId;
+    
+    @ManyToOne
+    @JoinColumn(name = "ACCOUNT_NUMBER", nullable = false)
+    private Account account;
+    
+    @Column(name = "TRANSACTION_TYPE")
+    private String transactionType;
+    
+    @Column(name = "AMOUNT")
+    private BigDecimal amount;
+    
+    @Column(name = "TRANSACTION_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date transactionDate;
+    
+    @Column(name = "REFERENCE_NO")
+    private String referenceNo;
+    
+    // Getters and Setters
+    public Long getTransactionId() {
+        return transactionId;
+    }
+    
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
+    }
+    
+    public Account getAccount() {
+        return account;
+    }
+    
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+    
+    public String getTransactionType() {
+        return transactionType;
+    }
+    
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+    
+    public BigDecimal getAmount() {
+        return amount;
+    }
+    
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+    
+    public Date getTransactionDate() {
+        return transactionDate;
+    }
+    
+    public void setTransactionDate(Date transactionDate) {
+        this.transactionDate = transactionDate;
+    }
+    
+    public String getReferenceNo() {
+        return referenceNo;
+    }
+    
+    public void setReferenceNo(String referenceNo) {
+        this.referenceNo = referenceNo;
+    }
+}
+```
+
+## 4. Repository Interfaces
+
+### UserLoginRepository.java
+```java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.UserLogin;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
+    UserLogin findByUsername(String username);
+    boolean existsByUsername(String username);
+}
+```
+
+### CustomerRepository.java
+```java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
+    Customer findByUserLogin_Username(String username);
+}
+```
+
+### AccountTypeRepository.java
+```java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.AccountType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface AccountTypeRepository extends JpaRepository<AccountType, Long> {
+}
+```
+
+### AccountRepository.java
+```java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.Account;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    List<Account> findByCustomer_CustomerId(Long customerId);
+}
+```
+
+### BankTransactionRepository.java
+```java
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.BankTransaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
+    List<BankTransaction> findByAccount_AccountNumber(Long accountNumber);
+}
+```
+
+## 5. Service Classes
+
+### AuthService.java
+```java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.dto.LoginRequest;
+import com.oracle.bankapp.dto.RegisterRequest;
+import com.oracle.bankapp.exception.UserAlreadyExistsException;
+import com.oracle.bankapp.model.Customer;
+import com.oracle.bankapp.model.UserLogin;
+import com.oracle.bankapp.repository.CustomerRepository;
+import com.oracle.bankapp.repository.UserLoginRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+
+@Service
+public class AuthService {
+    
+    @Autowired
+    private UserLoginRepository userLoginRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    public UserLogin authenticate(LoginRequest loginRequest) {
+        UserLogin userLogin = userLoginRepository.findByUsername(loginRequest.getUsername());
+        if (userLogin != null && passwordEncoder.matches(loginRequest.getPassword(), userLogin.getPassword())) {
+            return userLogin;
+        }
+        return null;
+    }
+    
+    public Customer register(RegisterRequest registerRequest) throws UserAlreadyExistsException {
+        if (userLoginRepository.existsByUsername(registerRequest.getUsername())) {
+            throw new UserAlreadyExistsException("Username already exists");
+        }
+        
+        UserLogin userLogin = new UserLogin();
+        userLogin.setUsername(registerRequest.getUsername());
+        userLogin.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        userLogin = userLoginRepository.save(userLogin);
+        
+        Customer customer = new Customer();
+        customer.setUserLogin(userLogin);
+        customer.setName(registerRequest.getName());
+        customer.setEmail(registerRequest.getEmail());
+        customer.setPhone(registerRequest.getPhone());
+        customer.setAddress(registerRequest.getAddress());
+        customer.setDob(registerRequest.getDob());
+        
+        return customerRepository.save(customer);
+    }
+}
+```
+
+### CustomerService.java
+```java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.exception.CustomerNotFoundException;
+import com.oracle.bankapp.model.Customer;
+import com.oracle.bankapp.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class CustomerService {
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
+    }
+    
+    public Customer getCustomerById(Long customerId) throws CustomerNotFoundException {
+        return customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+    }
+    
+    public Customer getCustomerByUsername(String username) throws CustomerNotFoundException {
+        Customer customer = customerRepository.findByUserLogin_Username(username);
+        if (customer == null) {
+            throw new CustomerNotFoundException("Customer not found with username: " + username);
+        }
+        return customer;
+    }
+    
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+    
+    public Customer updateCustomer(Long customerId, Customer customerDetails) throws CustomerNotFoundException {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+        
+        customer.setName(customerDetails.getName());
+        customer.setEmail(customerDetails.getEmail());
+        customer.setPhone(customerDetails.getPhone());
+        customer.setAddress(customerDetails.getAddress());
+        customer.setDob(customerDetails.getDob());
+        
+        return customerRepository.save(customer);
+    }
+}
+```
+
+### AccountService.java
+```java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.exception.AccountNotFoundException;
+import com.oracle.bankapp.exception.CustomerNotFoundException;
+import com.oracle.bankapp.model.Account;
+import com.oracle.bankapp.model.AccountType;
+import com.oracle.bankapp.model.Customer;
+import com.oracle.bankapp.repository.AccountRepository;
+import com.oracle.bankapp.repository.AccountTypeRepository;
+import com.oracle.bankapp.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Service
+public class AccountService {
+    
+    @Autowired
+    private AccountRepository accountRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    @Autowired
+    private AccountTypeRepository accountTypeRepository;
+    
+    public Account createAccount(Long customerId, Long accountTypeId) throws CustomerNotFoundException {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+        
+        AccountType accountType = accountTypeRepository.findById(accountTypeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid account type ID"));
+        
+        Account account = new Account();
+        account.setCustomer(customer);
+        account.setAccountType(accountType);
+        account.setBalance(BigDecimal.ZERO);
+        
+        return accountRepository.save(account);
+    }
+    
+    public List<Account> getAccountsByCustomerId(Long customerId) {
+        return accountRepository.findByCustomer_CustomerId(customerId);
+    }
+    
+    public Account getAccountByNumber(Long accountNumber) throws AccountNotFoundException {
+        return accountRepository.findById(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found with number: " + accountNumber));
+    }
+    
+    public BigDecimal getAccountBalance(Long accountNumber) throws AccountNotFoundException {
+        Account account = getAccountByNumber(accountNumber);
+        return account.getBalance();
+    }
+}
+```
+
+### TransactionService.java
+```java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.exception.AccountNotFoundException;
+import com.oracle.bankapp.exception.InsufficientBalanceException;
+import com.oracle.bankapp.model.Account;
+import com.oracle.bankapp.model.BankTransaction;
+import com.oracle.bankapp.repository.AccountRepository;
+import com.oracle.bankapp.repository.BankTransactionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class TransactionService {
+    
+    @Autowired
+    private AccountRepository accountRepository;
+    
+    @Autowired
+    private BankTransactionRepository transactionRepository;
+    
+    @Transactional
+    public BankTransaction deposit(Long accountNumber, BigDecimal amount) throws AccountNotFoundException {
+        Account account = accountRepository.findById(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found with number: " + accountNumber));
+        
+        account.setBalance(account.getBalance().add(amount));
+        accountRepository.save(account);
+        
+        BankTransaction transaction = new BankTransaction();
+        transaction.setAccount(account);
+        transaction.setTransactionType("DEPOSIT");
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(new Date());
+        transaction.setReferenceNo(generateReferenceNo("DEP"));
+        
+        return transactionRepository.save(transaction);
+    }
+    
+    @Transactional
+    public BankTransaction withdraw(Long accountNumber, BigDecimal amount) 
+            throws AccountNotFoundException, InsufficientBalanceException {
+        Account account = accountRepository.findById(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found with number: " + accountNumber));
+        
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance for withdrawal");
+        }
+        
+        account.setBalance(account.getBalance().subtract(amount));
+        accountRepository.save(account);
+        
+        BankTransaction transaction = new BankTransaction();
+        transaction.setAccount(account);
+        transaction.setTransactionType("WITHDRAW");
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(new Date());
+        transaction.setReferenceNo(generateReferenceNo("WITH"));
+        
+        return transactionRepository.save(transaction);
+    }
+    
+    public List<BankTransaction> getTransactionHistory(Long accountNumber) {
+        return transactionRepository.findByAccount_AccountNumber(accountNumber);
+    }
+    
+    private String generateReferenceNo(String prefix) {
+        return prefix + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8);
+    }
+}
+```
+
+## 6. Controller Classes
+
+### AuthController.java
+```java
+package com.oracle.bankapp.controller;
+
+import com.oracle.bankapp.dto.LoginRequest;
+import com.oracle.bankapp.dto.RegisterRequest;
+import com.oracle.bankapp.exception.UserAlreadyExistsException;
+import com.oracle.bankapp.model.UserLogin;
+import com.oracle.bankapp.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.servlet.http.HttpSession;
+
+@Controller
+public class AuthController {
+    
+    @Autowired
+    private AuthService authService;
+    
+    @GetMapping("/login")
+    public String showLoginForm(Model model) {
+        model.addAttribute("loginRequest", new LoginRequest());
+        return "login";
+    }
+    
+    @PostMapping("/login")
+    public String login(@ModelAttribute LoginRequest loginRequest, 
+                       HttpSession session, 
+                       RedirectAttributes redirectAttributes) {
+        UserLogin userLogin = authService.authenticate(loginRequest);
+        if (userLogin != null) {
+            session.setAttribute("username", userLogin.getUsername());
+            return "redirect:/dashboard";
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Invalid username or password");
+            return "redirect:/login";
+        }
+    }
+    
+    @GetMapping("/register")
+    public String showRegisterForm(Model model) {
+        model.addAttribute("registerRequest", new RegisterRequest());
+        return "register";
+    }
+    
+    @PostMapping("/register")
+    public String register(@ModelAttribute RegisterRequest registerRequest, 
+                          RedirectAttributes redirectAttributes) {
+        try {
+            authService.register(registerRequest);
+            redirectAttributes.addFlashAttribute("success", "Registration successful. Please login.");
+            return "redirect:/login";
+        } catch (UserAlreadyExistsException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/register";
+        }
+    }
+    
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}
+```
+
+### CustomerController.java
+```java
+package com.oracle.bankapp.controller;
+
+import com.oracle.bankapp.exception.CustomerNotFoundException;
+import com.oracle.bankapp.model.Customer;
+import com.oracle.bankapp.service.CustomerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpSession;
+
+@Controller
+@RequestMapping("/customer")
+public class CustomerController {
+    
+    @Autowired
+    private CustomerService customerService;
+    
+    @GetMapping("/create")
+    public String showCreateForm(Model model) {
+        model.addAttribute("customer", new Customer());
+        return "customer/create";
+    }
+    
+    @PostMapping("/create")
+    public String createCustomer(@ModelAttribute Customer customer, 
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        try {
+            Customer loggedInCustomer = customerService.getCustomerByUsername(username);
+            customer.setUserLogin(loggedInCustomer.getUserLogin());
+            customerService.createCustomer(customer);
+            redirectAttributes.addFlashAttribute("success", "Customer created successfully");
+            return "redirect:/customer/view/" + customer.getCustomerId();
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @GetMapping("/view/{id}")
+    public String viewCustomer(@PathVariable Long id, Model model, 
+                              HttpSession session,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Customer customer = customerService.getCustomerById(id);
+            model.addAttribute("customer", customer);
+            return "customer/view";
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model, 
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            Customer customer = customerService.getCustomerById(id);
+            model.addAttribute("customer", customer);
+            return "customer/edit";
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @PostMapping("/update/{id}")
+    public String updateCustomer(@PathVariable Long id, 
+                               @ModelAttribute Customer customerDetails,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            Customer updatedCustomer = customerService.updateCustomer(id, customerDetails);
+            redirectAttributes.addFlashAttribute("success", "Customer updated successfully");
+            return "redirect:/customer/view/" + id;
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+}
+```
+
+### AccountController.java
+```java
+package com.oracle.bankapp.controller;
+
+import com.oracle.bankapp.exception.AccountNotFoundException;
+import com.oracle.bankapp.exception.CustomerNotFoundException;
+import com.oracle.bankapp.model.Account;
+import com.oracle.bankapp.model.AccountType;
+import com.oracle.bankapp.service.AccountService;
+import com.oracle.bankapp.service.AccountTypeService;
+import com.oracle.bankapp.service.CustomerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.servlet.http.HttpSession;
+import java.util.List;
+
+@Controller
+@RequestMapping("/account")
+public class AccountController {
+    
+    @Autowired
+    private AccountService accountService;
+    
+    @Autowired
+    private CustomerService customerService;
+    
+    @Autowired
+    private AccountTypeService accountTypeService;
+    
+    @GetMapping("/create")
+    public String showCreateForm(Model model, HttpSession session, 
+                               RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        try {
+            Customer customer = customerService.getCustomerByUsername(username);
+            List<AccountType> accountTypes = accountTypeService.getAllAccountTypes();
+            
+            model.addAttribute("customerId", customer.getCustomerId());
+            model.addAttribute("accountTypes", accountTypes);
+            model.addAttribute("account", new Account());
+            
+            return "account/create";
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @PostMapping("/create")
+    public String createAccount(@RequestParam Long customerId, 
+                              @RequestParam Long accountTypeId,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Account account = accountService.createAccount(customerId, accountTypeId);
+            redirectAttributes.addFlashAttribute("success", "Account created successfully");
+            return "redirect:/account/view/" + account.getAccountNumber();
+        } catch (CustomerNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @GetMapping("/view/{accountNumber}")
+    public String viewAccount(@PathVariable Long accountNumber, Model model,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            Account account = accountService.getAccountByNumber(accountNumber);
+            model.addAttribute("account", account);
+            return "account/view";
+        } catch (AccountNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @GetMapping("/balance/{accountNumber}")
+    public String viewBalance(@PathVariable Long accountNumber, Model model,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            BigDecimal balance = accountService.getAccountBalance(accountNumber);
+            model.addAttribute("accountNumber", accountNumber);
+            model.addAttribute("balance", balance);
+            return "account/balance";
+        } catch (AccountNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+}
+```
+
+### TransactionController.java
+```java
+package com.oracle.bankapp.controller;
+
+import com.oracle.bankapp.exception.AccountNotFoundException;
+import com.oracle.bankapp.exception.InsufficientBalanceException;
+import com.oracle.bankapp.model.BankTransaction;
+import com.oracle.bankapp.service.TransactionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Controller
+@RequestMapping("/transaction")
+public class TransactionController {
+    
+    @Autowired
+    private TransactionService transactionService;
+    
+    @GetMapping("/deposit/{accountNumber}")
+    public String showDepositForm(@PathVariable Long accountNumber, Model model) {
+        model.addAttribute("accountNumber", accountNumber);
+        return "transaction/deposit";
+    }
+    
+    @PostMapping("/deposit/{accountNumber}")
+    public String deposit(@PathVariable Long accountNumber,
+                        @RequestParam BigDecimal amount,
+                        RedirectAttributes redirectAttributes) {
+        try {
+            BankTransaction transaction = transactionService.deposit(accountNumber, amount);
+            redirectAttributes.addFlashAttribute("success", 
+                "Deposit of " + amount + " successful. Reference: " + transaction.getReferenceNo());
+            return "redirect:/account/balance/" + accountNumber;
+        } catch (AccountNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/dashboard";
+        }
+    }
+    
+    @GetMapping("/withdraw/{accountNumber}")
+    public String showWithdrawForm(@PathVariable Long accountNumber, Model model) {
+        model.addAttribute("accountNumber", accountNumber);
+        return "transaction/withdraw";
+    }
+    
+    @PostMapping("/withdraw/{accountNumber}")
+    public String withdraw(@PathVariable Long accountNumber,
+                         @RequestParam BigDecimal amount,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            BankTransaction transaction = transactionService.withdraw(accountNumber, amount);
+            redirectAttributes.addFlashAttribute("success", 
+                "Withdrawal of " + amount + " successful. Reference: " + transaction.getReferenceNo());
+            return "redirect:/account/balance/" + accountNumber;
+        } catch (AccountNotFoundException | InsufficientBalanceException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/transaction/withdraw/" + accountNumber;
+        }
+    }
+    
+    @GetMapping("/history/{accountNumber}")
+    public String viewTransactionHistory(@PathVariable Long accountNumber, Model model,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            List<BankTransaction> transactions = transactionService.getTransactionHistory(accountNumber);
+            model.addAttribute("transactions", transactions);
+            model.addAttribute("accountNumber", accountNumber);
+            return "transaction/history";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error retrieving transaction history");
+            return "redirect:/account/view/" + accountNumber;
+        }
+    }
+}
+```
+
+## 7. Configuration Files
+
+### application.properties
+```properties
+# Spring DataSource
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+# Hibernate Properties
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.Oracle10gDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+# Thymeleaf Properties
+spring.thymeleaf.cache=false
+spring.thymeleaf.prefix=classpath:/templates/
+spring.thymeleaf.suffix=.html
+spring.thymeleaf.mode=HTML5
+spring.thymeleaf.encoding=UTF-8
+
+# Server Port
+server.port=8080
+
+# Security
+spring.security.user.name=admin
+spring.security.user.password=admin123
+```
+
+### SecurityConfig.java
+```java
+package com.oracle.bankapp.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers("/", "/login", "/register", "/css/**", "/js/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
+            .formLogin()
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .permitAll()
+                .and()
+            .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login")
+                .permitAll();
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+## 8. Main Application Class
+
+### BankApplication.java
+```java
+package com.oracle.bankapp;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BankApplication {
+    
+    public static void main(String[] args) {
+        SpringApplication.run(BankApplication.class, args);
+    }
+}
+```
+
+## 9. HTML Templates (Sample)
+
+### login.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank App - Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <p>Don't have an account? <a th:href="@{/register}">Register here</a></p>
+    </div>
+</body>
+</html>
+```
+
+### dashboard.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank App - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, <span th:text="${#httpSession.getAttribute('username')}"></span></h1>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <div class="menu">
+            <h2>Main Menu</h2>
+            <ul>
+                <li><a th:href="@{/customer/create}">Create Customer</a></li>
+                <li><a th:href="@{/account/create}">Create Account</a></li>
+                <li><a th:href="@{/transaction/deposit/}">Deposit Money</a></li>
+                <li><a th:href="@{/transaction/withdraw/}">Withdraw Money</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### account/balance.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Balance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <h2>Account Balance</h2>
+        <div class="balance-info">
+            <p>Account Number: <span th:text="${accountNumber}"></span></p>
+            <p>Current Balance: <span th:text="${balance}"></span></p>
+        </div>
+        
+        <div class="actions">
+            <a th:href="@{'/transaction/deposit/' + ${accountNumber}}" class="btn">Deposit</a>
+            <a th:href="@{'/transaction/withdraw/' + ${accountNumber}}" class="btn">Withdraw</a>
+            <a th:href="@{'/transaction/history/' + ${accountNumber}}" class="btn">View History</a>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+## 10. CSS (style.css)
+
+```css
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+}
+
+.logout-btn, .back-btn {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    background: #0056b3;
+    border-radius: 3px;
+}
+
+.logout-btn:hover, .back-btn:hover {
+    background: #003d7a;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 3px;
+}
+
+.alert-danger {
+    background: #ffdddd;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+    background: #ddffdd;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 15px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #0056b3;
+}
+
+.menu ul {
+    list-style: none;
+}
+
+.menu li {
+    margin-bottom: 10px;
+}
+
+.menu a {
+    display: block;
+    padding: 10px;
+    background: #f4f4f4;
+    color: #333;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.menu a:hover {
+    background: #ddd;
+}
+
+.balance-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 3px;
+}
+
+.balance-info p {
+    margin-bottom: 10px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+}
+```
+
+## 11. Exception Classes
+
+### UserAlreadyExistsException.java
+```java
+package com.oracle.bankapp.exception;
+
+public class UserAlreadyExistsException extends Exception {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
+}
+```
+
+### CustomerNotFoundException.java
+```java
+package com.oracle.bankapp.exception;
+
+public class CustomerNotFoundException extends Exception {
+    public CustomerNotFoundException(String message) {
+        super(message);
+    }
+}
+```
+
+### AccountNotFoundException.java
+```java
+package com.oracle.bankapp.exception;
+
+public class AccountNotFoundException extends Exception {
+    public AccountNotFoundException(String message) {
+        super(message);
+    }
+}
+```
+
+### InsufficientBalanceException.java
+```java
+package com.oracle.bankapp.exception;
+
+public class InsufficientBalanceException extends Exception {
+    public InsufficientBalanceException(String message) {
+        super(message);
+    }
+}
+```
+
+## 12. DTO Classes
+
+### LoginRequest.java
+```java
+package com.oracle.bankapp.dto;
+
+public class LoginRequest {
+    private String username;
+    private String password;
+    
+    // Getters and Setters
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+```
+
+### RegisterRequest.java
+```java
+package com.oracle.bankapp.dto;
+
+import java.util.Date;
+
+public class RegisterRequest {
+    private String username;
+    private String password;
+    private String name;
+    private String email;
+    private String phone;
+    private String address;
+    private Date dob;
+    
+    // Getters and Setters
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public Date getDob() {
+        return dob;
+    }
+    
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+}
+```
+
+## 13. Database Initialization (Optional)
+
+You can create a SQL script to initialize your database with sample data:
+
+```sql
+-- Insert account types
+INSERT INTO INTERN_ACCOUNT_TYPE (ACCOUNT_TYPE_ID, ACCOUNT_TYPE, ACCOUNT_DESC, ACCOUNT_TYPE_CODE)
+VALUES (1, 'SAVINGS', 'Savings Account', 'SB');
+
+INSERT INTO INTERN_ACCOUNT_TYPE (ACCOUNT_TYPE_ID, ACCOUNT_TYPE, ACCOUNT_DESC, ACCOUNT_TYPE_CODE)
+VALUES (2, 'CURRENT', 'Current Account', 'CA');
+
+-- Create sequences for IDs
+CREATE SEQUENCE LOGIN_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE CUSTOMER_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE ACCOUNT_SEQ START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE TRANSACTION_SEQ START WITH 1 INCREMENT BY 1;
+```
+
+## 14. Running the Application
+
+1. Make sure you have Oracle 10g installed and running with the tables created.
+2. Update the `application.properties` file with your Oracle database credentials.
+3. Run the Spring Boot application (`BankApplication.java`).
+4. Access the application at `http://localhost:8080`.
+
+## 15. Features Implemented
+
+1. **User Login**: Secure authentication with Spring Security
+2. **User Register**: New user registration with validation
+3. **Create Customer**: Create new customer profiles
+4. **Update Customer Details**: Edit existing customer information
+5. **View Customer Info**: View customer details
+6. **Create Account for Customer**: Open new accounts (Savings or Current)
+7. **Deposit Money**: Add funds to an account
+8. **Withdraw Money**: Remove funds from an account (with balance check)
+9. **View Balance**: Check current account balance
+10. **View Transaction History**: See all transactions for an account
+
+The application includes proper error handling, validation, and a simple but functional UI using Thymeleaf templates. The reference numbers for transactions are generated as requested (DEP or WITH prefix followed by timestamp and random numbers).
