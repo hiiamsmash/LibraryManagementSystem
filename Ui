@@ -1830,4 +1830,811 @@ public String showCreateForm(Model model, HttpSession session,
 }
 ```
 
-This completes the implementation of all the services needed for your bank management system. The `AccountTypeService` provides the necessary methods to manage account types (like Savings and Current accounts) that are used when creating new accounts for customers.
+This completes the implementation of all the services needed for your bank management system. The `AccountTypeService` provides the necessary methods to manage account types (like Savings and Current accounts) that are used when creating new accounts 
+for customers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+You're right! Let me provide complete HTML templates for all the required functionalities in your bank management system. I'll organize them according to the structure you mentioned earlier.
+
+## Complete HTML Templates
+
+### 1. login.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank App - Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="login-container">
+        <h1>Bank Management System</h1>
+        <div class="login-form">
+            <h2>Login</h2>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            
+            <form th:action="@{/login}" method="post">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <p class="register-link">Don't have an account? <a th:href="@{/register}">Register here</a></p>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 2. register.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank App - Register</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="register-container">
+        <h1>Bank Management System</h1>
+        <div class="register-form">
+            <h2>Register</h2>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            
+            <form th:action="@{/register}" method="post">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address:</label>
+                    <textarea id="address" name="address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="dob">Date of Birth:</label>
+                    <input type="date" id="dob" name="dob">
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+            <p class="login-link">Already have an account? <a th:href="@{/login}">Login here</a></p>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 3. dashboard.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank App - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, <span th:text="${#httpSession.getAttribute('username')}"></span></h1>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <div class="dashboard-menu">
+            <h2>Main Menu</h2>
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <h3>Customer Management</h3>
+                    <ul>
+                        <li><a th:href="@{/customer/create}">Create Customer</a></li>
+                        <li><a th:href="@{/customer/view/}">View Customer</a></li>
+                    </ul>
+                </div>
+                
+                <div class="menu-card">
+                    <h3>Account Management</h3>
+                    <ul>
+                        <li><a th:href="@{/account/create}">Create Account</a></li>
+                        <li><a th:href="@{/account/view/}">View Account</a></li>
+                    </ul>
+                </div>
+                
+                <div class="menu-card">
+                    <h3>Transactions</h3>
+                    <ul>
+                        <li><a th:href="@{/transaction/deposit/}">Deposit Money</a></li>
+                        <li><a th:href="@{/transaction/withdraw/}">Withdraw Money</a></li>
+                        <li><a th:href="@{/transaction/history/}">View History</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 4. customer/create.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Customer</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Create New Customer</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <form th:action="@{/customer/create}" method="post" th:object="${customer}">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" th:field="*{name}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" th:field="*{phone}">
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" th:field="*{address}"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" th:field="*{dob}">
+            </div>
+            <button type="submit" class="btn">Create Customer</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+### 5. customer/edit.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Customer</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Edit Customer</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <form th:action="@{'/customer/update/' + ${customer.customerId}}" method="post" th:object="${customer}">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" th:field="*{name}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" th:field="*{phone}">
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" th:field="*{address}"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" th:field="*{dob}">
+            </div>
+            <button type="submit" class="btn">Update Customer</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+### 6. customer/view.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>View Customer</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Customer Details</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <div class="customer-details">
+            <div class="detail-row">
+                <span class="detail-label">Customer ID:</span>
+                <span class="detail-value" th:text="${customer.customerId}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Name:</span>
+                <span class="detail-value" th:text="${customer.name}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value" th:text="${customer.email}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value" th:text="${customer.phone}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Address:</span>
+                <span class="detail-value" th:text="${customer.address}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date of Birth:</span>
+                <span class="detail-value" th:text="${#dates.format(customer.dob, 'dd-MM-yyyy')}"></span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a th:href="@{'/customer/edit/' + ${customer.customerId}}" class="btn">Edit</a>
+            <a th:href="@{'/account/create?customerId=' + ${customer.customerId}}" class="btn">Create Account</a>
+            <a th:href="@{'/account/view?customerId=' + ${customer.customerId}}" class="btn">View Accounts</a>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 7. account/create.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Create New Account</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <form th:action="@{/account/create}" method="post">
+            <input type="hidden" name="customerId" th:value="${customerId}">
+            
+            <div class="form-group">
+                <label for="accountTypeId">Account Type:</label>
+                <select id="accountTypeId" name="accountTypeId" required>
+                    <option value="">Select Account Type</option>
+                    <option th:each="accountType : ${accountTypes}" 
+                            th:value="${accountType.accountTypeId}"
+                            th:text="${accountType.accountType}"></option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+### 8. account/view.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>View Account</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Account Details</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <div class="account-details">
+            <div class="detail-row">
+                <span class="detail-label">Account Number:</span>
+                <span class="detail-value" th:text="${account.accountNumber}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Customer Name:</span>
+                <span class="detail-value" th:text="${account.customer.name}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Account Type:</span>
+                <span class="detail-value" th:text="${account.accountType.accountType}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Balance:</span>
+                <span class="detail-value" th:text="${account.balance}"></span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a th:href="@{'/account/balance/' + ${account.accountNumber}}" class="btn">View Balance</a>
+            <a th:href="@{'/transaction/deposit/' + ${account.accountNumber}}" class="btn">Deposit</a>
+            <a th:href="@{'/transaction/withdraw/' + ${account.accountNumber}}" class="btn">Withdraw</a>
+            <a th:href="@{'/transaction/history/' + ${account.accountNumber}}" class="btn">Transaction History</a>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 9. account/balance.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Balance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Account Balance</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        
+        <div class="balance-info">
+            <div class="detail-row">
+                <span class="detail-label">Account Number:</span>
+                <span class="detail-value" th:text="${accountNumber}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Current Balance:</span>
+                <span class="detail-value" th:text="${balance}"></span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a th:href="@{'/transaction/deposit/' + ${accountNumber}}" class="btn">Deposit</a>
+            <a th:href="@{'/transaction/withdraw/' + ${accountNumber}}" class="btn">Withdraw</a>
+            <a th:href="@{'/transaction/history/' + ${accountNumber}}" class="btn">View History</a>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 10. transaction/deposit.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Deposit Money</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Deposit Money</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <form th:action="@{'/transaction/deposit/' + ${accountNumber}}" method="post">
+            <div class="form-group">
+                <label for="amount">Amount to Deposit:</label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit" class="btn">Deposit</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+### 11. transaction/withdraw.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Withdraw Money</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Withdraw Money</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <form th:action="@{'/transaction/withdraw/' + ${accountNumber}}" method="post">
+            <div class="form-group">
+                <label for="amount">Amount to Withdraw:</label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit" class="btn">Withdraw</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+### 12. transaction/history.html
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Transaction History</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>Bank App</h1>
+        <a th:href="@{/dashboard}" class="back-btn">Back to Dashboard</a>
+        <a th:href="@{/logout}" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <h2>Transaction History</h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <div class="transaction-header">
+            <h3>Account Number: <span th:text="${accountNumber}"></span></h3>
+        </div>
+        
+        <table class="transaction-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Reference No</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="transaction : ${transactions}">
+                    <td th:text="${#dates.format(transaction.transactionDate, 'dd-MM-yyyy HH:mm')}"></td>
+                    <td th:text="${transaction.transactionType}"></td>
+                    <td th:text="${transaction.amount}"></td>
+                    <td th:text="${transaction.referenceNo}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+```
+
+## Updated CSS (style.css)
+
+```css
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+    font-size: 1.5rem;
+}
+
+.logout-btn, .back-btn {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    background: #0056b3;
+    border-radius: 4px;
+    margin-left: 10px;
+    transition: background 0.3s;
+}
+
+.logout-btn:hover, .back-btn:hover {
+    background: #003d7a;
+}
+
+/* Container Styles */
+.container {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Alert Messages */
+.alert {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    background: #ffdddd;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+    background: #ddffdd;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #0056b3;
+}
+
+/* Dashboard Menu */
+.dashboard-menu h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.menu-card {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.menu-card h3 {
+    margin-bottom: 15px;
+    color: #007bff;
+}
+
+.menu-card ul {
+    list-style: none;
+}
+
+.menu-card li {
+    margin-bottom: 10px;
+}
+
+.menu-card a {
+    display: block;
+    padding: 10px;
+    background: #e9ecef;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.menu-card a:hover {
+    background: #d1d7dc;
+}
+
+/* Detail Views */
+.detail-row {
+    display: flex;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-label {
+    font-weight: bold;
+    width: 150px;
+    color: #555;
+}
+
+.detail-value {
+    flex: 1;
+}
+
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Transaction Table */
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.transaction-table th,
+.transaction-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.transaction-table th {
+    background-color: #007bff;
+    color: white;
+}
+
+.transaction-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Login/Register Specific */
+.login-container, .register-container {
+    max-width: 500px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.login-form, .register-form {
+    background: white;
+    padding: 30px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.login-form h2, .register-form h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.register-link, .login-link {
+    margin-top: 20px;
+    display: block;
+    color: #666;
+}
+
+.register-link a, .login-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.register-link a:hover, .login-link a:hover {
+    text-decoration: underline;
+}
+```
+
+This completes all the HTML templates for your bank management system. Each template is designed to work with the corresponding controller and service methods we implemented earlier. The CSS provides a consistent look and feel across all pages with responsive design elements.
