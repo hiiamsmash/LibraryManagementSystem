@@ -1743,3 +1743,91 @@ CREATE SEQUENCE TRANSACTION_SEQ START WITH 1 INCREMENT BY 1;
 10. **View Transaction History**: See all transactions for an account
 
 The application includes proper error handling, validation, and a simple but functional UI using Thymeleaf templates. The reference numbers for transactions are generated as requested (DEP or WITH prefix followed by timestamp and random numbers).
+
+
+
+You're absolutely right! I missed the `AccountTypeService` class. Here's the implementation for the `AccountTypeService` that should be added to the service package:
+
+## AccountTypeService.java
+
+```java
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.model.AccountType;
+import com.oracle.bankapp.repository.AccountTypeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class AccountTypeService {
+    
+    @Autowired
+    private AccountTypeRepository accountTypeRepository;
+    
+    public List<AccountType> getAllAccountTypes() {
+        return accountTypeRepository.findAll();
+    }
+    
+    public AccountType getAccountTypeById(Long accountTypeId) {
+        return accountTypeRepository.findById(accountTypeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid account type ID"));
+    }
+    
+    public AccountType createAccountType(AccountType accountType) {
+        return accountTypeRepository.save(accountType);
+    }
+    
+    public AccountType updateAccountType(Long accountTypeId, AccountType accountTypeDetails) {
+        AccountType accountType = getAccountTypeById(accountTypeId);
+        accountType.setAccountType(accountTypeDetails.getAccountType());
+        accountType.setAccountDesc(accountTypeDetails.getAccountDesc());
+        accountType.setAccountTypeCode(accountTypeDetails.getAccountTypeCode());
+        return accountTypeRepository.save(accountType);
+    }
+    
+    public void deleteAccountType(Long accountTypeId) {
+        AccountType accountType = getAccountTypeById(accountTypeId);
+        accountTypeRepository.delete(accountType);
+    }
+}
+```
+
+This service class provides the following functionality:
+
+1. **getAllAccountTypes()**: Retrieves all account types from the database
+2. **getAccountTypeById()**: Retrieves a specific account type by its ID
+3. **createAccountType()**: Creates a new account type
+4. **updateAccountType()**: Updates an existing account type
+5. **deleteAccountType()**: Deletes an account type
+
+You'll need to inject this service into any controllers or other services that need to work with account types. For example, in the `AccountController`, you would use it to populate the account type dropdown when creating a new account.
+
+Also, make sure to update the `AccountController` to properly use this service. Here's how you might modify the relevant part of the `AccountController`:
+
+```java
+@Autowired
+private AccountTypeService accountTypeService;
+
+@GetMapping("/create")
+public String showCreateForm(Model model, HttpSession session, 
+                           RedirectAttributes redirectAttributes) {
+    String username = (String) session.getAttribute("username");
+    try {
+        Customer customer = customerService.getCustomerByUsername(username);
+        List<AccountType> accountTypes = accountTypeService.getAllAccountTypes();
+        
+        model.addAttribute("customerId", customer.getCustomerId());
+        model.addAttribute("accountTypes", accountTypes);
+        model.addAttribute("account", new Account());
+        
+        return "account/create";
+    } catch (CustomerNotFoundException e) {
+        redirectAttributes.addFlashAttribute("error", e.getMessage());
+        return "redirect:/dashboard";
+    }
+}
+```
+
+This completes the implementation of all the services needed for your bank management system. The `AccountTypeService` provides the necessary methods to manage account types (like Savings and Current accounts) that are used when creating new accounts for customers.
