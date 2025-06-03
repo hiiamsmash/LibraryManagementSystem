@@ -49,7 +49,7 @@ VALUES (2, 'CURRENT', 'Current Account', 'CA');
 3. INTERN_ACCOUNT
 
 CREATE TABLE INTERN_ACCOUNT (
-    ACCOUNT_ID NUMBER PRIMARY KEY,
+    ACCOUNT_NUMBER NUMBER PRIMARY KEY,
     CUSTOMER_ID NUMBER NOT NULL,
     ACCOUNT_TYPE_ID NUMBER NOT NULL,
     BALANCE NUMBER(15, 2) DEFAULT 0.00,
@@ -62,12 +62,12 @@ CREATE TABLE INTERN_ACCOUNT (
 
 CREATE TABLE INTERN_BANK_TRANSACTION (
     TRANSACTION_ID NUMBER PRIMARY KEY,
-    ACCOUNT_ID NUMBER NOT NULL,
+    ACCOUNT_NUMBER NUMBER NOT NULL,
     TRANSACTION_TYPE VARCHAR2(10),
     AMOUNT NUMBER(15, 2),
     TRANSACTION_DATE DATE,
     REFERENCE_NO VARCHAR2(20),
-    FOREIGN KEY (ACCOUNT_ID) REFERENCES INTERN_ACCOUNT(ACCOUNT_ID)
+    FOREIGN KEY (ACCOUNT_NUMBER) REFERENCES INTERN_ACCOUNT(ACCOUNT_NUMBER)
 );
 
 
@@ -282,8 +282,8 @@ public class Account {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "ACCOUNT_ID")
-    private Long accountId;
+    @Column(name = "ACCOUNT_NUMBER")
+    private Long accountNumber;
     
     @ManyToOne
     @JoinColumn(name = "CUSTOMER_ID", nullable = false)
@@ -297,12 +297,12 @@ public class Account {
     private BigDecimal balance;
     
     // Getters and Setters
-    public Long getAccountId() {
-        return accountId;
+    public Long getaccountNumber() {
+        return accountNumber;
     }
     
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
+    public void setaccountNumber(Long accountNumber) {
+        this.accountNumber = accountNumber;
     }
     
     public Customer getCustomer() {
@@ -347,7 +347,7 @@ public class BankTransaction {
     private Long transactionId;
     
     @ManyToOne
-    @JoinColumn(name = "ACCOUNT_ID", nullable = false)
+    @JoinColumn(name = "ACCOUNT_NUMBER", nullable = false)
     private Account account;
     
     @Column(name = "TRANSACTION_TYPE")
@@ -463,7 +463,7 @@ import java.util.List;
 
 @Repository
 public interface BankTransactionRepository extends JpaRepository<BankTransaction, Long> {
-    List<BankTransaction> findByAccount_AccountId(Long accountId);
+    List<BankTransaction> findByAccount_accountNumber(Long accountNumber);
 }
 5. Service Layer
 BankService.java
@@ -579,8 +579,8 @@ public class BankService {
     
     // Deposit Money
     @Transactional
-    public Account deposit(Long accountId, BigDecimal amount) {
-        Account account = accountRepository.findById(accountId).orElse(null);
+    public Account deposit(Long accountNumber, BigDecimal amount) {
+        Account account = accountRepository.findById(accountNumber).orElse(null);
         if (account == null) {
             return null;
         }
@@ -602,8 +602,8 @@ public class BankService {
     
     // Withdraw Money
     @Transactional
-    public Account withdraw(Long accountId, BigDecimal amount) {
-        Account account = accountRepository.findById(accountId).orElse(null);
+    public Account withdraw(Long accountNumber, BigDecimal amount) {
+        Account account = accountRepository.findById(accountNumber).orElse(null);
         if (account == null || account.getBalance().compareTo(amount) < 0) {
             return null;
         }
@@ -624,14 +624,14 @@ public class BankService {
     }
     
     // View Balance
-    public BigDecimal getBalance(Long accountId) {
-        Account account = accountRepository.findById(accountId).orElse(null);
+    public BigDecimal getBalance(Long accountNumber) {
+        Account account = accountRepository.findById(accountNumber).orElse(null);
         return account != null ? account.getBalance() : null;
     }
     
     // View Transaction History
-    public List<BankTransaction> getTransactionHistory(Long accountId) {
-        return transactionRepository.findByAccount_AccountId(accountId);
+    public List<BankTransaction> getTransactionHistory(Long accountNumber) {
+        return transactionRepository.findByAccount_accountNumber(accountNumber);
     }
     
     // Helper method to generate reference number
@@ -726,34 +726,34 @@ public class BankController {
     }
     
     // Deposit Money
-    @PostMapping("/account/{accountId}/deposit")
+    @PostMapping("/account/{accountNumber}/deposit")
     public ResponseEntity<Account> deposit(
-            @PathVariable Long accountId,
+            @PathVariable Long ,
             @RequestParam BigDecimal amount) {
-        Account account = bankService.deposit(accountId, amount);
+        Account account = bankService.deposit(accountNumber, amount);
         return account != null ? ResponseEntity.ok(account) : ResponseEntity.badRequest().build();
     }
     
     // Withdraw Money
-    @PostMapping("/account/{accountId}/withdraw")
+    @PostMapping("/account/{accountNumber}/withdraw")
     public ResponseEntity<Account> withdraw(
-            @PathVariable Long accountId,
+            @PathVariable Long accountNumber,
             @RequestParam BigDecimal amount) {
-        Account account = bankService.withdraw(accountId, amount);
+        Account account = bankService.withdraw(accountNumber, amount);
         return account != null ? ResponseEntity.ok(account) : ResponseEntity.badRequest().build();
     }
     
     // View Balance
-    @GetMapping("/account/{accountId}/balance")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long accountId) {
-        BigDecimal balance = bankService.getBalance(accountId);
+    @GetMapping("/account/{accountNumber}/balance")
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long accountNumber) {
+        BigDecimal balance = bankService.getBalance(accountNumber);
         return balance != null ? ResponseEntity.ok(balance) : ResponseEntity.notFound().build();
     }
     
     // View Transaction History
-    @GetMapping("/account/{accountId}/transactions")
-    public ResponseEntity<List<BankTransaction>> getTransactionHistory(@PathVariable Long accountId) {
-        List<BankTransaction> transactions = bankService.getTransactionHistory(accountId);
+    @GetMapping("/account/{accountNumber}/transactions")
+    public ResponseEntity<List<BankTransaction>> getTransactionHistory(@PathVariable Long accountNumber) {
+        List<BankTransaction> transactions = bankService.getTransactionHistory(accountNumber);
         return ResponseEntity.ok(transactions);
     }
 }
@@ -810,7 +810,7 @@ Deposit Money
 
 Method: POST
 
-URL: http://localhost:8080/api/bank/account/{accountId}/deposit
+URL: http://localhost:8080/api/bank/account/{accountNumber}/deposit
 
 Params: amount
 
@@ -818,7 +818,7 @@ Withdraw Money
 
 Method: POST
 
-URL: http://localhost:8080/api/bank/account/{accountId}/withdraw
+URL: http://localhost:8080/api/bank/account/{accountNumber}/withdraw
 
 Params: amount
 
@@ -826,13 +826,13 @@ View Balance
 
 Method: GET
 
-URL: http://localhost:8080/api/bank/account/{accountId}/balance
+URL: http://localhost:8080/api/bank/account/{accountNumber}/balance
 
 View Transaction History
 
 Method: GET
 
-URL: http://localhost:8080/api/bank/account/{accountId}/transactions
+URL: http://localhost:8080/api/bank/account/{accountNumber}/transactions
 
 
 
