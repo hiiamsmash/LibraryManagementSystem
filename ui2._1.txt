@@ -1,0 +1,811 @@
+# Angular 20 Project Structure Adaptation
+
+Since you're using Angular 20, which has a slightly different project structure than previous versions, I'll help you adapt the bank management UI to fit this new structure while maintaining all the functionality.
+
+## Updated Project Structure for Angular 20
+
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── login/
+│   │   │   │   ├── login.component.ts
+│   │   │   │   ├── login.component.html
+│   │   │   │   └── login.component.css
+│   │   │   └── register/
+│   │   ├── customer/
+│   │   │   ├── create-customer/
+│   │   │   ├── update-customer/
+│   │   │   └── view-customer/
+│   │   ├── account/
+│   │   │   ├── create-account/
+│   │   │   ├── deposit/
+│   │   │   ├── withdraw/
+│   │   │   └── transactions/
+│   │   └── dashboard/
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── customer.service.ts
+│   │   ├── account.service.ts
+│   │   └── transaction.service.ts
+│   ├── models/
+│   │   ├── user.model.ts
+│   │   ├── customer.model.ts
+│   │   ├── account.model.ts
+│   │   └── transaction.model.ts
+│   ├── guards/
+│   │   └── auth.guard.ts
+│   ├── interceptors/
+│   │   └── auth.interceptor.ts
+│   ├── app.routes.ts
+│   └── app.config.ts
+├── assets/
+├── main.ts
+└── styles.css
+```
+
+## Key Changes for Angular 20
+
+1. **app.routes.ts** (instead of app-routing.module.ts)
+```typescript
+import { Routes } from '@angular/router';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { authGuard } from './guards/auth.guard';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: 'customers/create', loadComponent: () => import('./components/customer/create-customer/create-customer.component').then(m => m.CreateCustomerComponent) },
+      { path: 'accounts/create', loadComponent: () => import('./components/account/create-account/create-account.component').then(m => m.CreateAccountComponent) },
+      { path: 'transactions/deposit', loadComponent: () => import('./components/account/deposit/deposit.component').then(m => m.DepositComponent) },
+      { path: 'transactions/withdraw', loadComponent: () => import('./components/account/withdraw/withdraw.component').then(m => m.WithdrawComponent) },
+      { path: 'transactions/history', loadComponent: () => import('./components/account/transactions/transactions.component').then(m => m.TransactionsComponent) },
+      { path: '', redirectTo: 'customers/create', pathMatch: 'full' }
+    ]
+  },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/login' }
+];
+```
+
+2. **app.config.ts** (replaces app.module.ts)
+```typescript
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { ToastrModule } from 'ngx-toastr';
+import { authInterceptor } from './interceptors/auth.interceptor';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
+    provideAnimations(),
+    importProvidersFrom(
+      ToastrModule.forRoot({
+        timeOut: 3000,
+        positionClass: 'toast-top-right',
+        preventDuplicates: true,
+      })
+    )
+  ]
+};
+```
+
+3. **main.ts** (updated bootstrap)
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, appConfig)
+  .catch((err) => console.error(err));
+```
+
+4. **Standalone Components Example (login.component.ts)**
+```typescript
+import { Component } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
+import { ToastrService } from 'ngx-toastr';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, CommonModule, RouterLink],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username: string = '';
+  password: string = '';
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private toastr: ToastrService
+  ) {}
+
+  onSubmit() {
+    this.authService.login(this.username, this.password).subscribe({
+      next: (response) => {
+        this.toastr.success('Login successful');
+        localStorage.setItem('token', response.token);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error) => {
+        this.toastr.error('Login failed: Invalid credentials');
+      }
+    });
+  }
+}
+```
+
+5. **Updated Auth Guard (auth.guard.ts)**
+```typescript
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+
+export const authGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  
+  if (localStorage.getItem('token')) {
+    return true;
+  } else {
+    router.navigate(['/login']);
+    return false;
+  }
+};
+```
+
+6. **Updated Interceptor (auth.interceptor.ts)**
+```typescript
+import { HttpInterceptorFn } from '@angular/common/http';
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const token = localStorage.getItem('token');
+  
+  if (token) {
+    const authReq = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return next(authReq);
+  }
+  
+  return next(req);
+};
+```
+
+## Key Angular 20 Features Used:
+
+1. **Standalone Components**: All components are now standalone
+2. **Functional Guards/Interceptors**: Using `CanActivateFn` and `HttpInterceptorFn`
+3. **New Router Syntax**: `provideRouter` and `withInterceptors`
+4. **Lazy Loading**: Using `loadComponent` for child routes
+5. **Application Config**: Centralized configuration in `app.config.ts`
+
+## Implementation Notes:
+
+1. **Component Creation**: Each component should be created with:
+   ```bash
+   ng generate component components/auth/login --standalone --skip-import
+   ```
+
+2. **Service Creation**: Services should be created with:
+   ```bash
+   ng generate service services/auth --skip-tests
+   ```
+
+3. **Dependencies**: Ensure you have these in your package.json:
+   ```json
+   "dependencies": {
+     "@angular/animations": "^20.0.0",
+     "@angular/common": "^20.0.0",
+     "@angular/compiler": "^20.0.0",
+     "@angular/core": "^20.0.0",
+     "@angular/forms": "^20.0.0",
+     "@angular/platform-browser": "^20.0.0",
+     "@angular/platform-browser-dynamic": "^20.0.0",
+     "@angular/router": "^20.0.0",
+     "bootstrap": "^5.3.0",
+     "ngx-toastr": "^16.0.0",
+     "rxjs": "~7.8.0",
+     "tslib": "^2.3.0",
+     "zone.js": "~0.14.3"
+   }
+   ```
+
+4. **Styles**: Add Bootstrap to styles.css:
+   ```css
+   @import '~bootstrap/dist/css/bootstrap.min.css';
+   @import '~ngx-toastr/toastr-bs5-alert';
+   ```
+
+This structure maintains all the functionality from the previous implementation while fully utilizing Angular 20's modern features and project structure. The application will have:
+- Clean, modular architecture
+- Lazy-loaded components
+- Modern standalone component design
+- Functional guards and interceptors
+- Type-safe dependency injection
+- Efficient change detection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+000000000000000000000000000000000000000
+
+
+first
+
+
+# Angular UI for Bank Management System
+
+Here's a complete Angular UI implementation for your bank management system with all the required functionalities.
+
+## 1. Setup Angular Project
+
+First, create a new Angular project:
+```bash
+ng new bank-management-ui
+cd bank-management-ui
+```
+
+Install required dependencies:
+```bash
+npm install bootstrap@5.3.0 @ng-bootstrap/ng-bootstrap@13.0.0 ngx-toastr@16.0.0
+```
+
+## 2. App Structure
+
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── login/
+│   │   │   └── register/
+│   │   ├── customer/
+│   │   │   ├── create-customer/
+│   │   │   ├── update-customer/
+│   │   │   └── view-customer/
+│   │   ├── account/
+│   │   │   ├── create-account/
+│   │   │   ├── deposit/
+│   │   │   ├── withdraw/
+│   │   │   └── transactions/
+│   │   └── dashboard/
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── customer.service.ts
+│   │   ├── account.service.ts
+│   │   └── transaction.service.ts
+│   ├── models/
+│   │   ├── user.model.ts
+│   │   ├── customer.model.ts
+│   │   ├── account.model.ts
+│   │   └── transaction.model.ts
+│   ├── guards/
+│   │   └── auth.guard.ts
+│   ├── interceptors/
+│   │   └── auth.interceptor.ts
+│   └── app.component.html
+└── styles.scss
+```
+
+## 3. Core Services
+
+### auth.service.ts
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private apiUrl = 'http://localhost:8080/api/bank';
+
+  constructor(private http: HttpClient) { }
+
+  login(username: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/login`, { username, password });
+  }
+
+  register(username: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, { username, password });
+  }
+}
+```
+
+### customer.service.ts
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CustomerService {
+  private apiUrl = 'http://localhost:8080/api/bank';
+
+  constructor(private http: HttpClient) { }
+
+  createCustomer(customerData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/customers`, customerData);
+  }
+
+  updateCustomer(customerId: number, customerData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/customers/${customerId}`, customerData);
+  }
+
+  getCustomer(customerId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/customers/${customerId}`);
+  }
+}
+```
+
+## 4. Login Component
+
+### login.component.html
+```html
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Bank Login</h4>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="username" 
+                     [(ngModel)]="username" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" 
+                     [(ngModel)]="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+          <div class="mt-3 text-center">
+            <a routerLink="/register">Don't have an account? Register</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### login.component.ts
+```typescript
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { ToastrService } from 'ngx-toastr';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username: string = '';
+  password: string = '';
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private toastr: ToastrService
+  ) {}
+
+  onSubmit() {
+    this.authService.login(this.username, this.password).subscribe(
+      (response) => {
+        this.toastr.success('Login successful');
+        localStorage.setItem('token', response.token); // Assuming your backend returns a token
+        this.router.navigate(['/dashboard']);
+      },
+      (error) => {
+        this.toastr.error('Login failed: Invalid credentials');
+      }
+    );
+  }
+}
+```
+
+## 5. Dashboard Component
+
+### dashboard.component.html
+```html
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          Navigation
+        </div>
+        <div class="list-group list-group-flush">
+          <a routerLink="/customers/create" class="list-group-item list-group-item-action">
+            Create Customer
+          </a>
+          <a routerLink="/accounts/create" class="list-group-item list-group-item-action">
+            Create Account
+          </a>
+          <a routerLink="/transactions/deposit" class="list-group-item list-group-item-action">
+            Deposit Money
+          </a>
+          <a routerLink="/transactions/withdraw" class="list-group-item list-group-item-action">
+            Withdraw Money
+          </a>
+          <a routerLink="/transactions/history" class="list-group-item list-group-item-action">
+            View Transactions
+          </a>
+          <button class="list-group-item list-group-item-action text-danger" (click)="logout()">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+```
+
+## 6. Transaction History Component
+
+### transactions.component.html
+```html
+<div class="card">
+  <div class="card-header bg-primary text-white">
+    <h5>Transaction History</h5>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <label class="form-label">Account Number</label>
+      <input type="number" class="form-control" [(ngModel)]="accountNumber">
+      <button class="btn btn-primary mt-2" (click)="loadTransactions()">Load Transactions</button>
+    </div>
+
+    <table class="table table-striped" *ngIf="transactions.length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Date & Time</th>
+          <th>Reference No</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tx of transactions">
+          <td>{{ tx.transactionId }}</td>
+          <td>{{ tx.transactionType }}</td>
+          <td>{{ tx.amount | currency }}</td>
+          <td>{{ tx.transactionDate | date:'medium' }}</td>
+          <td>{{ tx.referenceNo }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="transactions.length === 0 && accountNumber" class="alert alert-info">
+      No transactions found for this account
+    </div>
+  </div>
+</div>
+```
+
+### transactions.component.ts
+```typescript
+import { Component } from '@angular/core';
+import { TransactionService } from '../../services/transaction.service';
+import { ToastrService } from 'ngx-toastr';
+
+@Component({
+  selector: 'app-transactions',
+  templateUrl: './transactions.component.html',
+  styleUrls: ['./transactions.component.css']
+})
+export class TransactionsComponent {
+  accountNumber: number | null = null;
+  transactions: any[] = [];
+
+  constructor(
+    private transactionService: TransactionService,
+    private toastr: ToastrService
+  ) {}
+
+  loadTransactions() {
+    if (this.accountNumber) {
+      this.transactionService.getTransactions(this.accountNumber).subscribe(
+        (data) => {
+          this.transactions = data;
+        },
+        (error) => {
+          this.toastr.error('Failed to load transactions');
+          this.transactions = [];
+        }
+      );
+    }
+  }
+}
+```
+
+## 7. App Routing Module
+
+### app-routing.module.ts
+```typescript
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AuthGuard } from './guards/auth.guard';
+import { CreateCustomerComponent } from './components/customer/create-customer/create-customer.component';
+import { TransactionsComponent } from './components/account/transactions/transactions.component';
+import { DepositComponent } from './components/account/deposit/deposit.component';
+import { WithdrawComponent } from './components/account/withdraw/withdraw.component';
+import { CreateAccountComponent } from './components/account/create-account/create-account.component';
+
+const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: 'customers/create', component: CreateCustomerComponent },
+      { path: 'accounts/create', component: CreateAccountComponent },
+      { path: 'transactions/deposit', component: DepositComponent },
+      { path: 'transactions/withdraw', component: WithdrawComponent },
+      { path: 'transactions/history', component: TransactionsComponent },
+      { path: '', redirectTo: 'customers/create', pathMatch: 'full' }
+    ]
+  },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/login' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+```
+
+## 8. Styling (styles.scss)
+
+```scss
+/* Import Bootstrap */
+@import '~bootstrap/scss/bootstrap';
+@import '~ngx-toastr/toastr-bs5-alert';
+
+/* Global Styles */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: none;
+}
+
+.card-header {
+  font-weight: 600;
+}
+
+.list-group-item.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.table th {
+  background-color: #f8f9fa;
+}
+
+/* Form Styles */
+.form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+
+/* Toastr Styles */
+.toast-container {
+  margin-top: 1rem;
+}
+```
+
+## 9. App Module
+
+### app.module.ts
+```typescript
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { CreateCustomerComponent } from './components/customer/create-customer/create-customer.component';
+import { TransactionsComponent } from './components/account/transactions/transactions.component';
+import { DepositComponent } from './components/account/deposit/deposit.component';
+import { WithdrawComponent } from './components/account/withdraw/withdraw.component';
+import { CreateAccountComponent } from './components/account/create-account/create-account.component';
+
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ToastrModule } from 'ngx-toastr';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    RegisterComponent,
+    DashboardComponent,
+    CreateCustomerComponent,
+    TransactionsComponent,
+    DepositComponent,
+    WithdrawComponent,
+    CreateAccountComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    NgbModule,
+    BrowserAnimationsModule,
+    ToastrModule.forRoot({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    })
+  ],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+## 10. Auth Interceptor
+
+### auth.interceptor.ts
+```typescript
+import { Injectable } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+
+  constructor() {}
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      request = request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+    
+    return next.handle(request);
+  }
+}
+```
+
+## 11. Auth Guard
+
+### auth.guard.ts
+```typescript
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  constructor(private router: Router) {}
+
+  canActivate(): boolean {
+    if (localStorage.getItem('token')) {
+      return true;
+    } else {
+      this.router.navigate(['/login']);
+      return false;
+    }
+  }
+}
+```
+
+## 12. Running the Application
+
+1. Start your Spring Boot backend
+2. Run the Angular application:
+```bash
+ng serve
+```
+3. Open `http://localhost:4200` in your browser
+
+This complete Angular UI provides all the functionality you requested:
+- User login/registration
+- Customer management
+- Account operations
+- Transaction processing
+- Transaction history with date and time
+- Responsive design with Bootstrap
+- Toast notifications
+- Route protection
+- JWT authentication
+
+The UI is clean, user-friendly, and fully functional with your Spring Boot backend.
