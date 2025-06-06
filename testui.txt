@@ -1,0 +1,253 @@
+You have a **Spring Boot backend** with these APIs:
+
+✅ `POST http://localhost:8080/api/bank/register`
+✅ `POST http://localhost:8080/api/bank/login`
+
+The frontend is **Angular v18**, and you want to:
+
+👉 Send data (username, password) from frontend form → backend
+👉 Receive response → display it in frontend UI
+
+---
+
+I'll show you the step-by-step example:
+
+---
+
+### 1️⃣ Backend: Sample Spring Boot Controller (you probably already have this)
+
+```java
+@RestController
+@RequestMapping("/api/bank")
+public class BankController {
+
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> register(@RequestParam String username, @RequestParam String password) {
+        // Dummy logic
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User registered successfully!");
+        response.put("username", username);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@RequestParam String username, @RequestParam String password) {
+        // Dummy logic
+        Map<String, String> response = new HashMap<>();
+        if ("test10".equals(username) && "test@10".equals(password)) {
+            response.put("message", "Login successful!");
+            response.put("username", username);
+        } else {
+            response.put("message", "Invalid credentials!");
+        }
+        return ResponseEntity.ok(response);
+    }
+}
+```
+
+---
+
+### 2️⃣ Frontend Angular Setup
+
+#### 2.1 Create **RegisterComponent** and **LoginComponent**
+
+```bash
+ng generate component register
+ng generate component login
+```
+
+#### 2.2 Create **bank.service.ts** (Angular Service to call backend)
+
+```bash
+ng generate service bank
+```
+
+`bank.service.ts`
+
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BankService {
+
+  private baseUrl = 'http://localhost:8080/api/bank';
+
+  constructor(private http: HttpClient) { }
+
+  register(username: string, password: string): Observable<any> {
+    const params = new HttpParams()
+      .set('username', username)
+      .set('password', password);
+
+    return this.http.post(`${this.baseUrl}/register`, params);
+  }
+
+  login(username: string, password: string): Observable<any> {
+    const params = new HttpParams()
+      .set('username', username)
+      .set('password', password);
+
+    return this.http.post(`${this.baseUrl}/login`, params);
+  }
+}
+```
+
+> ⚠️ In case your backend requires `application/x-www-form-urlencoded`:
+
+You need to change it:
+
+```typescript
+register(username: string, password: string): Observable<any> {
+  const body = new URLSearchParams();
+  body.set('username', username);
+  body.set('password', password);
+
+  return this.http.post(`${this.baseUrl}/register`, body.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+}
+
+login(username: string, password: string): Observable<any> {
+  const body = new URLSearchParams();
+  body.set('username', username);
+  body.set('password', password);
+
+  return this.http.post(`${this.baseUrl}/login`, body.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+}
+```
+
+---
+
+#### 2.3 Create simple **form in RegisterComponent**
+
+`register.component.html`
+
+```html
+<h2>Register</h2>
+<form (ngSubmit)="onRegister()">
+  <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
+  <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
+  <button type="submit">Register</button>
+</form>
+
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
+```
+
+`register.component.ts`
+
+```typescript
+import { Component } from '@angular/core';
+import { BankService } from '../bank.service';
+
+@Component({
+  selector: 'app-register',
+  templateUrl: './register.component.html'
+})
+export class RegisterComponent {
+
+  username = '';
+  password = '';
+  responseMessage = '';
+
+  constructor(private bankService: BankService) {}
+
+  onRegister() {
+    this.bankService.register(this.username, this.password).subscribe(
+      response => {
+        this.responseMessage = response.message;
+      },
+      error => {
+        this.responseMessage = 'Error registering user.';
+      }
+    );
+  }
+}
+```
+
+---
+
+#### 2.4 Similar form for **LoginComponent**
+
+`login.component.html`
+
+```html
+<h2>Login</h2>
+<form (ngSubmit)="onLogin()">
+  <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
+  <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
+  <button type="submit">Login</button>
+</form>
+
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
+```
+
+`login.component.ts`
+
+```typescript
+import { Component } from '@angular/core';
+import { BankService } from '../bank.service';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {
+
+  username = '';
+  password = '';
+  responseMessage = '';
+
+  constructor(private bankService: BankService) {}
+
+  onLogin() {
+    this.bankService.login(this.username, this.password).subscribe(
+      response => {
+        this.responseMessage = response.message;
+      },
+      error => {
+        this.responseMessage = 'Error logging in.';
+      }
+    );
+  }
+}
+```
+
+---
+
+### 3️⃣ Add routing
+
+In `app-routing.module.ts`
+
+```typescript
+const routes: Routes = [
+  { path: 'register', component: RegisterComponent },
+  { path: 'login', component: LoginComponent },
+  { path: '', redirectTo: '/login', pathMatch: 'full' }
+];
+```
+
+---
+
+### 4️⃣ Summary flow:
+
+* User fills form → clicks submit
+* Angular calls your backend endpoint
+* Backend returns message → Angular displays on screen
+
+---
+
+If you want:
+
+✅ I can give you FULL sample project (Angular + Spring Boot) ready to run — you can copy and test in 5 mins.
+✅ I can also show you how to add "User already exists" and "Invalid login" validation.
+
+---
+
+Would you like me to generate a full working example project for you (backend + frontend)?
+You can then run and test it yourself 🚀. Just say **YES** and I will provide.
