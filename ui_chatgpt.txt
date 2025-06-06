@@ -1,0 +1,897 @@
+src/
+├── app/
+│   ├── app-routing.module.ts
+│   ├── app.component.css
+│   ├── app.component.html
+│   ├── app.component.ts
+│   ├── app.module.ts
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── customer.service.ts
+│   │   ├── account.service.ts
+│   │   └── transaction.service.ts
+│   ├── models/
+│   │   ├── user.ts
+│   │   ├── customer.ts
+│   │   ├── account.ts
+│   │   └── transaction.ts
+│   ├── components/
+│   │   ├── login/
+│   │   │   ├── login.component.html
+│   │   │   ├── login.component.ts
+│   │   │   └── login.component.css
+│   │   ├── register/
+│   │   │   ├── register.component.html
+│   │   │   ├── register.component.ts
+│   │   │   └── register.component.css
+│   │   ├── dashboard/
+│   │   │   ├── dashboard.component.html
+│   │   │   ├── dashboard.component.ts
+│   │   │   └── dashboard.component.css
+│   │   ├── customer/
+│   │   │   ├── customer.component.html
+│   │   │   ├── customer.component.ts
+│   │   │   └── customer.component.css
+│   │   ├── account/
+│   │   │   ├── account.component.html
+│   │   │   ├── account.component.ts
+│   │   │   └── account.component.css
+│   │   ├── transaction/
+│   │   │   ├── transaction.component.html
+│   │   │   ├── transaction.component.ts
+│   │   │   └── transaction.component.css
+assets/
+│   └── styles.css
+index.html
+tsxconfig.app.json
+angular.json
+package.json
+
+
+
+
+// Project Structure:
+// src/
+// ├── app/
+// │   ├── services/
+// │   │   └── api.service.ts
+// │   ├── models/
+// │   │   ├── user.model.ts
+// │   │   ├── customer.model.ts
+// │   │   ├── account.model.ts
+// │   │   └── transaction.model.ts
+// │   ├── interceptors/
+// │   │   └── auth.interceptor.ts
+// │   ├── components/
+// │   │   ├── login/
+// │   │   │   └── login.component.ts/html/css
+// │   │   ├── register/
+// │   │   │   └── register.component.ts/html/css
+// │   │   ├── dashboard/
+// │   │   │   └── dashboard.component.ts/html/css
+// │   │   ├── profile/
+// │   │   │   └── profile.component.ts/html/css
+// │   │   ├── account/
+// │   │   │   ├── create-account.component.ts/html/css
+// │   │   │   ├── deposit.component.ts/html/css
+// │   │   │   └── withdraw.component.ts/html/css
+// │   │   └── transactions/
+// │   │       └── transaction-history.component.ts/html/css
+// │   ├── app-routing.module.ts
+// │   └── app.module.ts
+// └── index.html
+
+// Example: app/models/user.model.ts
+export interface User {
+  id?: number;
+  username: string;
+  email: string;
+  password: string;
+}
+
+// app/models/customer.model.ts
+export interface Customer {
+  id?: number;
+  name: string;
+  address: string;
+  contact: string;
+}
+
+// app/models/account.model.ts
+export interface Account {
+  id?: number;
+  customerId: number;
+  type: string;
+  balance: number;
+}
+
+// app/models/transaction.model.ts
+export interface Transaction {
+  id?: number;
+  accountId: number;
+  type: 'DEPOSIT' | 'WITHDRAW';
+  amount: number;
+  timestamp?: string;
+}
+
+// app/services/api.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { User, Customer, Account, Transaction } from '../models';
+
+@Injectable({ providedIn: 'root' })
+export class ApiService {
+  private baseUrl = 'http://localhost:8080/api';
+
+  constructor(private http: HttpClient) {}
+
+  login(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/login`, data);
+  }
+
+  register(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/register`, data);
+  }
+
+  getProfile(): Observable<Customer> {
+    return this.http.get<Customer>(`${this.baseUrl}/customers/me`);
+  }
+
+  updateProfile(data: Customer): Observable<Customer> {
+    return this.http.put<Customer>(`${this.baseUrl}/customers/me`, data);
+  }
+
+  createAccount(data: Account): Observable<Account> {
+    return this.http.post<Account>(`${this.baseUrl}/accounts`, data);
+  }
+
+  deposit(accountId: number, amount: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/accounts/${accountId}/deposit`, { amount });
+  }
+
+  withdraw(accountId: number, amount: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/accounts/${accountId}/withdraw`, { amount });
+  }
+
+  getTransactions(accountId: number): Observable<Transaction[]> {
+    return this.http.get<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions`);
+  }
+}
+
+// auth.interceptor.ts (simplified)
+import { Injectable } from '@angular/core';
+import {
+  HttpInterceptor, HttpRequest, HttpHandler, HttpEvent
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const token = localStorage.getItem('token');
+    if (token) {
+      req = req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      });
+    }
+    return next.handle(req);
+  }
+}
+
+// app.module.ts - Just show providers setup
+providers: [
+  { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+]
+
+// Continue with routing and component examples in next update...
+
+
+
+
+
+// File: src/app/app.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'Banking App';
+}
+
+// File: src/app/app.component.html
+<router-outlet></router-outlet>
+
+// File: src/app/components/login/login.component.ts
+import { Component } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {
+  email = '';
+  password = '';
+  error = '';
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  login() {
+    this.authService.login(this.email, this.password).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: () => this.error = 'Invalid credentials'
+    });
+  }
+}
+
+// File: src/app/components/login/login.component.html
+<div class="container">
+  <h2>Login</h2>
+  <form (ngSubmit)="login()">
+    <input type="email" [(ngModel)]="email" name="email" placeholder="Email" required>
+    <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p class="error">{{ error }}</p>
+</div>
+
+// File: src/app/components/register/register.component.ts
+import { Component } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-register',
+  templateUrl: './register.component.html'
+})
+export class RegisterComponent {
+  name = '';
+  email = '';
+  password = '';
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  register() {
+    this.authService.register(this.name, this.email, this.password).subscribe(() => {
+      this.router.navigate(['/login']);
+    });
+  }
+}
+
+// File: src/app/components/register/register.component.html
+<div class="container">
+  <h2>Register</h2>
+  <form (ngSubmit)="register()">
+    <input type="text" [(ngModel)]="name" name="name" placeholder="Name" required>
+    <input type="email" [(ngModel)]="email" name="email" placeholder="Email" required>
+    <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required>
+    <button type="submit">Register</button>
+  </form>
+</div>
+
+// File: src/app/components/dashboard/dashboard.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-dashboard',
+  template: `
+    <div class="container">
+      <h2>Dashboard</h2>
+      <nav>
+        <a routerLink="/customers">Customers</a>
+        <a routerLink="/accounts">Accounts</a>
+        <a routerLink="/transactions">Transactions</a>
+      </nav>
+    </div>
+  `
+})
+export class DashboardComponent {}
+
+// File: src/app/app-routing.module.ts
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './components/login/login.component';
+import { RegisterComponent } from './components/register/register.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { CustomerListComponent } from './components/customers/customer-list.component';
+import { AccountListComponent } from './components/accounts/account-list.component';
+import { TransactionListComponent } from './components/transactions/transaction-list.component';
+import { AuthGuard } from './guards/auth.guard';
+
+const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'customers', component: CustomerListComponent, canActivate: [AuthGuard] },
+  { path: 'accounts', component: AccountListComponent, canActivate: [AuthGuard] },
+  { path: 'transactions', component: TransactionListComponent, canActivate: [AuthGuard] },
+  { path: '', redirectTo: '/login', pathMatch: 'full' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {}
+
+// File: src/app/app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+
+import { AppComponent } from './app.component';
+import { LoginComponent } from './components/login/login.component';
+import { RegisterComponent } from './components/register/register.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AppRoutingModule } from './app-routing.module';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { CustomerListComponent } from './components/customers/customer-list.component';
+import { AccountListComponent } from './components/accounts/account-list.component';
+import { TransactionListComponent } from './components/transactions/transaction-list.component';
+import { AuthGuard } from './guards/auth.guard';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    RegisterComponent,
+    DashboardComponent,
+    CustomerListComponent,
+    AccountListComponent,
+    TransactionListComponent
+  ],
+  imports: [BrowserModule, FormsModule, HttpClientModule, AppRoutingModule],
+  providers: [
+    AuthGuard,
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}
+
+
+
+
+
+
+src/app/services/customer.service.ts
+ts
+Copy
+Edit
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class CustomerService {
+  private baseUrl = 'http://localhost:8080/api/customers';
+
+  constructor(private http: HttpClient) {}
+
+  createCustomer(customer: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/create`, customer);
+  }
+
+  getAllCustomers(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/all`);
+  }
+
+  getCustomer(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${id}`);
+  }
+
+  updateCustomer(id: number, customer: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${id}`, customer);
+  }
+}
+📁 src/app/components/customer/customer.component.ts
+ts
+Copy
+Edit
+import { Component, OnInit } from '@angular/core';
+import { CustomerService } from 'src/app/services/customer.service';
+
+@Component({
+  selector: 'app-customer',
+  templateUrl: './customer.component.html',
+})
+export class CustomerComponent implements OnInit {
+  customers: any[] = [];
+
+  constructor(private customerService: CustomerService) {}
+
+  ngOnInit() {
+    this.customerService.getAllCustomers().subscribe(data => {
+      this.customers = data;
+    });
+  }
+}
+📁 src/app/components/customer/customer.component.html
+html
+Copy
+Edit
+<h2>Customer List</h2>
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Email</th>
+  </tr>
+  <tr *ngFor="let c of customers">
+    <td>{{ c.id }}</td>
+    <td>{{ c.name }}</td>
+    <td>{{ c.email }}</td>
+  </tr>
+</table>
+📁 src/app/services/account.service.ts
+ts
+Copy
+Edit
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class AccountService {
+  private baseUrl = 'http://localhost:8080/api/accounts';
+
+  constructor(private http: HttpClient) {}
+
+  createAccount(account: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/create`, account);
+  }
+
+  deposit(accountId: number, amount: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${accountId}/deposit`, { amount });
+  }
+
+  withdraw(accountId: number, amount: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${accountId}/withdraw`, { amount });
+  }
+
+  getAccountDetails(accountId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${accountId}`);
+  }
+}
+📁 src/app/components/account/account.component.ts
+ts
+Copy
+Edit
+import { Component } from '@angular/core';
+import { AccountService } from 'src/app/services/account.service';
+
+@Component({
+  selector: 'app-account',
+  templateUrl: './account.component.html',
+})
+export class AccountComponent {
+  accountId: number = 0;
+  amount: number = 0;
+  message: string = '';
+
+  constructor(private accountService: AccountService) {}
+
+  deposit() {
+    this.accountService.deposit(this.accountId, this.amount).subscribe(() => {
+      this.message = 'Deposit successful';
+    });
+  }
+
+  withdraw() {
+    this.accountService.withdraw(this.accountId, this.amount).subscribe(() => {
+      this.message = 'Withdrawal successful';
+    });
+  }
+}
+📁 src/app/components/account/account.component.html
+html
+Copy
+Edit
+<h2>Account Operations</h2>
+<input type="number" [(ngModel)]="accountId" placeholder="Account ID" />
+<input type="number" [(ngModel)]="amount" placeholder="Amount" />
+<button (click)="deposit()">Deposit</button>
+<button (click)="withdraw()">Withdraw</button>
+<p>{{ message }}</p>
+📁 src/app/services/transaction.service.ts
+ts
+Copy
+Edit
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class TransactionService {
+  private baseUrl = 'http://localhost:8080/api/transactions';
+
+  constructor(private http: HttpClient) {}
+
+  getTransactionHistory(accountId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/account/${accountId}`);
+  }
+}
+📁 src/app/components/transaction/transaction.component.ts
+ts
+Copy
+Edit
+import { Component } from '@angular/core';
+import { TransactionService } from 'src/app/services/transaction.service';
+
+@Component({
+  selector: 'app-transaction',
+  templateUrl: './transaction.component.html',
+})
+export class TransactionComponent {
+  accountId: number = 0;
+  transactions: any[] = [];
+
+  constructor(private transactionService: TransactionService) {}
+
+  fetchTransactions() {
+    this.transactionService.getTransactionHistory(this.accountId).subscribe(data => {
+      this.transactions = data;
+    });
+  }
+}
+📁 src/app/components/transaction/transaction.component.html
+html
+Copy
+Edit
+<h2>Transaction History</h2>
+<input type="number" [(ngModel)]="accountId" placeholder="Account ID" />
+<button (click)="fetchTransactions()">Fetch</button>
+
+<table *ngIf="transactions.length">
+  <tr>
+    <th>Date</th>
+    <th>Type</th>
+    <th>Amount</th>
+  </tr>
+  <tr *ngFor="let t of transactions">
+    <td>{{ t.date }}</td>
+    <td>{{ t.type }}</td>
+    <td>{{ t.amount }}</td>
+  </tr>
+</table>
+Let me know if you want:
+
+✅ Styles (CSS/SCSS) for the components
+
+✅ README file
+
+✅ Environment config setup
+
+✅ Full file tree structure again for reference
+
+✅ ZIP file version (if you'd prefer downloading)
+
+Shall I proceed with styles and polish next?
+
+
+
+
+
+
+You said:
+yes
+
+
+ChatGPT said:
+Great! Let’s now add styles to make the UI clean and user-friendly. Below are the CSS files for each component. You can place these in the corresponding .component.css files in your Angular project.
+
+📁 login.component.css
+css
+Copy
+Edit
+.container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+input, button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+📁 register.component.css
+css
+Copy
+Edit
+.container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+input, button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+button:hover {
+  background-color: #218838;
+}
+📁 customer.component.css
+css
+Copy
+Edit
+table {
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+📁 account.component.css
+css
+Copy
+Edit
+h2 {
+  text-align: center;
+  margin-top: 30px;
+}
+
+input, button {
+  display: block;
+  margin: 10px auto;
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #138496;
+}
+
+p {
+  text-align: center;
+  margin-top: 15px;
+  color: green;
+  font-weight: bold;
+}
+📁 transaction.component.css
+css
+Copy
+Edit
+input, button {
+  display: block;
+  margin: 10px auto;
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+table {
+  margin: 20px auto;
+  width: 90%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ccc;
+}
+
+th {
+  background-color: #6c757d;
+  color: white;
+}
+Optional: 📁 app.component.css
+css
+Copy
+Edit
+nav {
+  background-color: #343a40;
+  padding: 1rem;
+  text-align: center;
+}
+
+a {
+  color: white;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #ffc107;
+}
+Next Steps:
+
+✅ Do you want a README.md explaining how to run it?
+
+✅ Do you want me to give the environment file and proxy config for cross-origin requests?
+
+✅ Should I give a styles.scss for global styling or leave component-based?
+
+Let me know, and I’ll finish the rest!
+
+
+
+
+
+
+You said:
+yes give readme
+
+
+ChatGPT said:
+Here's your complete README.md for the Angular 20 + Spring Boot Bank Management App 👇
+
+💳 Bank Management System (Angular + Spring Boot)
+A full-stack banking application with:
+
+User authentication (Login/Register)
+
+Customer management (Create, View, Update)
+
+Bank account operations (Create, Deposit, Withdraw)
+
+Transaction history view
+
+🧱 Technologies Used
+Frontend	Backend
+Angular 20	Spring Boot
+RxJS, Forms	Spring Security
+TypeScript	JPA, Hibernate
+Bootstrap (optional)	H2 / MySQL
+
+🚀 Getting Started
+🔧 Backend (Spring Boot)
+Clone your Spring Boot code (or use existing):
+
+bash
+Copy
+Edit
+cd spring-boot-bank-backend
+Run backend:
+
+With IDE: Run BankApplication.java
+
+Or using Maven:
+
+arduino
+Copy
+Edit
+mvn spring-boot:run
+Default API port: http://localhost:8080/
+
+🎨 Frontend (Angular 20)
+Clone this Angular project:
+
+bash
+Copy
+Edit
+git clone <your-repo-url>
+cd bank-app-angular
+Install dependencies:
+
+bash
+Copy
+Edit
+npm install
+Run Angular app:
+
+bash
+Copy
+Edit
+ng serve
+Default Angular URL: http://localhost:4200/
+
+🔁 CORS & Proxy Setup (Optional but recommended)
+To handle CORS between Angular and Spring Boot, use a proxy:
+
+Create proxy.conf.json in Angular root:
+json
+Copy
+Edit
+{
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
+Then update angular.json → serve.options:
+json
+Copy
+Edit
+"options": {
+  "proxyConfig": "proxy.conf.json"
+}
+Now you can call backend APIs via /api/... directly.
+
+✅ Functional Pages
+Component	Route	Description
+Login	/login	User login
+Register	/register	New user registration
+Customers	/customers	View / Edit / Create customer profiles
+Accounts	/accounts	Create account / deposit / withdraw
+Transactions	/transactions	View all transactions by account number
+
+🗃️ Folder Structure
+cpp
+Copy
+Edit
+src/
+├── app/
+│   ├── auth/            # login & register
+│   ├── customer/        # customer form + list
+│   ├── account/         # account operations
+│   ├── transaction/     # transaction list
+│   ├── services/        # shared Angular services
+│   └── app-routing.module.ts
+│   └── app.component.*
+├── assets/
+├── environments/
+│   └── environment.ts   # base API URL
+🧪 Sample API Endpoints
+Action	Method	URL
+Register	POST	/api/auth/register
+Login	POST	/api/auth/login
+Get all customers	GET	/api/customers
+Add customer	POST	/api/customers
+Update customer	PUT	/api/customers/{id}
+Create account	POST	/api/accounts
+Deposit	POST	/api/accounts/deposit
+Withdraw	POST	/api/accounts/withdraw
+Get transactions	GET	/api/transactions/{acc}
+
