@@ -1,37 +1,105 @@
-Perfect! Since you already have your **Spring Boot backend ready**, I will focus **only on the Angular side** for your requirement:
+Great! From the image you provided, I can confirm a few things:
 
-✅ Angular v18 project
-✅ Simple Register + Login forms
-✅ Send form data as `application/x-www-form-urlencoded` (since your backend expects `@RequestParam`)
-✅ Display response message on UI
+✅ You’ve created your Angular 18 project using the new **standalone-based architecture** (introduced in Angular 17+ and default in Angular 18).
+✅ You do **not have `app.module.ts`**, which is expected in standalone projects.
+✅ Instead, you have:
+
+* `app.routes.ts`
+* `app.config.ts`
 
 ---
 
-### 1️⃣ Setup Angular Project (if not done already)
+### ✅ What This Means for You
+
+In Angular 18 (standalone):
+
+* Components use `standalone: true`
+* Routing is done in `app.routes.ts`
+* App bootstraps using `app.config.ts`
+
+---
+
+### 🚀 Let's Add Register and Login Components in Angular 18
+
+#### 1️⃣ Create Register and Login Components
+
+Use the `--standalone` flag:
 
 ```bash
-ng new bank-frontend --routing=true --style=css
-cd bank-frontend
-ng add @angular/material    # optional if you want nice UI
+ng generate component register --standalone
+ng generate component login --standalone
+```
+
+This will create:
+
+```
+src/app/register/
+  - register.component.ts
+  - register.component.html
+  - register.component.css
+
+src/app/login/
+  - login.component.ts
+  - login.component.html
+  - login.component.css
 ```
 
 ---
 
-### 2️⃣ Generate Components and Service
+#### 2️⃣ Add Routes in `app.routes.ts`
+
+Update `src/app/app.routes.ts` like this:
+
+```ts
+import { Routes } from '@angular/router';
+import { provideRouter } from '@angular/router';
+import { RegisterComponent } from './register/register.component';
+import { LoginComponent } from './login/login.component';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'register', component: RegisterComponent },
+  { path: 'login', component: LoginComponent }
+];
+
+export const appConfig = provideRouter(routes);
+```
+
+---
+
+#### 3️⃣ Update `app.config.ts` to include router and forms
+
+Update `src/app/app.config.ts`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideForms } from '@angular/forms';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(),
+    provideRouter(routes),
+    provideAnimations(),
+    provideForms()
+  ]
+};
+```
+
+---
+
+#### 4️⃣ Create `bank.service.ts`
 
 ```bash
-ng generate component register
-ng generate component login
 ng generate service bank
 ```
 
----
+`src/app/bank.service.ts`:
 
-### 3️⃣ `bank.service.ts`
-
-👉 This is the service that calls your backend
-
-```typescript
+```ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -40,7 +108,6 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class BankService {
-
   private baseUrl = 'http://localhost:8080/api/bank';
 
   constructor(private http: HttpClient) {}
@@ -69,33 +136,23 @@ export class BankService {
 
 ---
 
-### 4️⃣ RegisterComponent
+#### 5️⃣ Register Component (UI + Logic)
 
-#### `register.component.html`
+`register.component.ts`
 
-```html
-<h2>Register</h2>
-<form (ngSubmit)="onRegister()">
-  <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
-  <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
-  <button type="submit">Register</button>
-</form>
-
-<p *ngIf="responseMessage">{{ responseMessage }}</p>
-```
-
-#### `register.component.ts`
-
-```typescript
+```ts
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BankService } from '../bank.service';
 
 @Component({
   selector: 'app-register',
-  templateUrl: './register.component.html'
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './register.component.html',
 })
 export class RegisterComponent {
-
   username = '';
   password = '';
   responseMessage = '';
@@ -104,46 +161,46 @@ export class RegisterComponent {
 
   onRegister() {
     this.bankService.register(this.username, this.password).subscribe(
-      response => {
-        this.responseMessage = response.message;
-      },
-      error => {
-        this.responseMessage = 'Error registering user.';
-      }
+      (res) => this.responseMessage = res.message,
+      () => this.responseMessage = 'Registration failed!'
     );
   }
 }
 ```
 
----
-
-### 5️⃣ LoginComponent
-
-#### `login.component.html`
+`register.component.html`
 
 ```html
-<h2>Login</h2>
-<form (ngSubmit)="onLogin()">
-  <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
-  <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
-  <button type="submit">Login</button>
+<h2>Register</h2>
+<form (ngSubmit)="onRegister()">
+  <input type="text" [(ngModel)]="username" name="username" placeholder="Username" required>
+  <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required>
+  <button type="submit">Register</button>
 </form>
-
 <p *ngIf="responseMessage">{{ responseMessage }}</p>
 ```
 
-#### `login.component.ts`
+---
 
-```typescript
+#### 6️⃣ Login Component (UI + Logic)
+
+Same as Register, but for login.
+
+`login.component.ts`
+
+```ts
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BankService } from '../bank.service';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.component.html'
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
-
   username = '';
   password = '';
   responseMessage = '';
@@ -152,108 +209,38 @@ export class LoginComponent {
 
   onLogin() {
     this.bankService.login(this.username, this.password).subscribe(
-      response => {
-        this.responseMessage = response.message;
-      },
-      error => {
-        this.responseMessage = 'Error logging in.';
-      }
+      (res) => this.responseMessage = res.message,
+      () => this.responseMessage = 'Login failed!'
     );
   }
 }
 ```
 
----
+`login.component.html`
 
-### 6️⃣ AppRouting
-
-#### `app-routing.module.ts`
-
-```typescript
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { RegisterComponent } from './register/register.component';
-import { LoginComponent } from './login/login.component';
-
-const routes: Routes = [
-  { path: 'register', component: RegisterComponent },
-  { path: 'login', component: LoginComponent },
-  { path: '', redirectTo: '/login', pathMatch: 'full' } // default to login page
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}
+```html
+<h2>Login</h2>
+<form (ngSubmit)="onLogin()">
+  <input type="text" [(ngModel)]="username" name="username" placeholder="Username" required>
+  <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required>
+  <button type="submit">Login</button>
+</form>
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
 ```
 
 ---
 
-### 7️⃣ AppModule
-
-✅ Don't forget to import `HttpClientModule` and `FormsModule`:
-
-```typescript
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { RegisterComponent } from './register/register.component';
-import { LoginComponent } from './login/login.component';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
-
-@NgModule({
-  declarations: [
-    AppComponent,
-    RegisterComponent,
-    LoginComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    FormsModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-```
-
----
-
-### 8️⃣ Running the App
-
-1. Run your **Spring Boot backend** on port `8080`
-2. Run Angular:
+### ✅ Run the App
 
 ```bash
-ng serve --open
+ng serve
 ```
 
-Now visit:
+Visit:
 
-✅ [http://localhost:4200/register](http://localhost:4200/register) → Register page
-✅ [http://localhost:4200/login](http://localhost:4200/login) → Login page
-
----
-
-### Summary:
-
-✅ You have Register + Login form in Angular
-✅ It sends username/password as `x-www-form-urlencoded` (correct for your backend `@RequestParam`)
-✅ Displays response in UI
+* `http://localhost:4200/login`
+* `http://localhost:4200/register`
 
 ---
 
-If you want:
-
-✅ I can generate this **entire Angular project ZIP file** → you can directly open & run (ready-made)
-✅ I can also show how to **save token / session** after login for next steps (if needed)
-
----
-
-Do you want me to give you the **full working Angular project zip** also? (Just say *yes* if you want it.)
-Then you can just `ng serve` and test in 1 minute 🚀.
+Would you like me to zip up and send a ready-to-run `Angular 18 Standalone` project with this setup so you can test it instantly?
