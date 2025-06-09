@@ -342,3 +342,39 @@ onLogin() {
   );
 }
 
+
+
+login(username: string, password: string): Observable<string> {
+  const body = new URLSearchParams();
+  body.set('username', username);
+  body.set('password', password);
+
+  return this.http.post(`${this.baseUrl}/login`, body.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    responseType: 'text'
+  });
+}
+
+
+onLogin() {
+  this.bankService.login(this.username, this.password).subscribe(
+    (res: string) => {
+      console.log('Success:', res);
+      this.responseMessage = res;
+
+      if (res.startsWith('Login successful')) {
+        this.router.navigate(['/dashboard']);
+      }
+    },
+    (error) => {
+      console.error('Error:', error);
+      if (error.status === 401) {
+        this.responseMessage = 'Invalid username or password!';
+      } else {
+        this.responseMessage = 'Login failed!';
+      }
+    }
+  );
+}
+
+
