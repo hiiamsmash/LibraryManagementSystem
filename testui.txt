@@ -168,3 +168,177 @@ import { AppRoutingModule } from './app-routing.module';
   bootstrap: [AppComponent]
 })
 export class AppModule {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////
+
+
+
+Perfect! Now you are building it step by step like a real app — excellent.
+
+You now want this flow:
+
+👉 Login successful → go to /dashboard → show:
+
+✅ Button / Link: "Create Customer"
+✅ Form: takes:
+
+loginId
+
+name
+
+email
+
+phone
+
+address
+
+dob
+
+✅ Submits form to:
+POST http://localhost:8080/api/bank/customers
+
+Step-by-step plan:
+1️⃣ Add /dashboard route
+👉 In app.routes.ts:
+
+ts
+Copy
+Edit
+import { DashboardComponent } from './dashboard/dashboard.component';
+
+export const routes: Routes = [
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'dashboard', component: DashboardComponent }, // ✅ new
+];
+2️⃣ Create DashboardComponent
+👉 Generate component:
+
+bash
+Copy
+Edit
+ng generate component dashboard --standalone
+👉 OR manually create:
+
+ts
+Copy
+Edit
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [FormsModule, RouterLink],
+  templateUrl: './dashboard.component.html'
+})
+export class DashboardComponent {
+  loginId: number | null = null;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  responseMessage = '';
+
+  constructor(private bankService: BankService) {}
+
+  createCustomer() {
+    this.bankService.createCustomer(
+      this.loginId!,
+      this.name,
+      this.email,
+      this.phone,
+      this.address,
+      this.dob
+    ).subscribe(
+      (res) => {
+        console.log('Success:', res);
+        this.responseMessage = res;
+      },
+      (error) => {
+        console.error('Error:', error);
+        this.responseMessage = 'Customer creation failed!';
+      }
+    );
+  }
+}
+3️⃣ dashboard.component.html
+html
+Copy
+Edit
+<h2>Dashboard - Create Customer</h2>
+
+<form (ngSubmit)="createCustomer()">
+  <input type="number" placeholder="Login ID" [(ngModel)]="loginId" name="loginId" required />
+  <input type="text" placeholder="Name" [(ngModel)]="name" name="name" required />
+  <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required />
+  <input type="text" placeholder="Phone" [(ngModel)]="phone" name="phone" />
+  <input type="text" placeholder="Address" [(ngModel)]="address" name="address" />
+  <input type="date" placeholder="DOB" [(ngModel)]="dob" name="dob" />
+
+  <button type="submit">Create Customer</button>
+</form>
+
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
+4️⃣ Update bank.service.ts
+👉 Add this method:
+
+ts
+Copy
+Edit
+createCustomer(loginId: number, name: string, email: string, phone: string, address: string, dob: string): Observable<any> {
+  const body = new URLSearchParams();
+  body.set('loginId', loginId.toString());
+  body.set('name', name);
+  body.set('email', email);
+  body.set('phone', phone);
+  body.set('address', address);
+  body.set('dob', dob);
+
+  return this.http.post(`${this.baseUrl}/customers`, body.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    responseType: 'text' as 'json'
+  });
+}
+5️⃣ Redirect after login
+👉 In login.component.ts, after successful login, navigate to /dashboard:
+
+ts
+Copy
+Edit
+onLogin() {
+  this.bankService.login(this.username, this.password).subscribe(
+    (res) => {
+      console.log('Success:', res);
+      this.responseMessage = res;
+
+      if (res.includes('Login successful')) {
+        this.router.navigate(['/dashboard']); // ✅ redirect to dashboard
+      }
+    },
+    (error) => {
+      console.error('Error:', error);
+      if (error.status === 401) {
+        this.responseMessage = 'Invalid username or password!';
+      } else {
+        this.responseMessage = 'Login failed!';
+      }
+    }
+  );
+}
+
