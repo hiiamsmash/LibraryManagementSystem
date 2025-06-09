@@ -238,16 +238,16 @@ Copy
 Edit
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { BankService } from '../bank.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent {
-  loginId: number | null = null;
+  loginId!: number;
   name = '';
   email = '';
   phone = '';
@@ -257,26 +257,27 @@ export class DashboardComponent {
 
   constructor(private bankService: BankService) {}
 
-  createCustomer() {
+  onCreateCustomer() {
     this.bankService.createCustomer(
-      this.loginId!,
+      this.loginId,
       this.name,
       this.email,
       this.phone,
       this.address,
       this.dob
     ).subscribe(
-      (res) => {
+      (res: string) => {    // ✅ Add type here
         console.log('Success:', res);
         this.responseMessage = res;
       },
-      (error) => {
+      (error: any) => {     // ✅ Add type here
         console.error('Error:', error);
         this.responseMessage = 'Customer creation failed!';
       }
     );
   }
 }
+
 3️⃣ dashboard.component.html
 html
 Copy
@@ -301,7 +302,7 @@ Edit
 ts
 Copy
 Edit
-createCustomer(loginId: number, name: string, email: string, phone: string, address: string, dob: string): Observable<any> {
+createCustomer(loginId: number, name: string, email: string, phone: string, address: string, dob: string): Observable<string> {
   const body = new URLSearchParams();
   body.set('loginId', loginId.toString());
   body.set('name', name);
@@ -312,9 +313,10 @@ createCustomer(loginId: number, name: string, email: string, phone: string, addr
 
   return this.http.post(`${this.baseUrl}/customers`, body.toString(), {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    responseType: 'text' as 'json'
+    responseType: 'text'
   });
 }
+
 5️⃣ Redirect after login
 👉 In login.component.ts, after successful login, navigate to /dashboard:
 
