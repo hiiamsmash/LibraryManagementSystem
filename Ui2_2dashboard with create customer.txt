@@ -1,0 +1,237 @@
+Perfect! Let’s now organize your Angular dashboard with a navigation menu and route redirection for each action.
+
+✅ Your Plan:
+
+You want a dashboard with links like:
+	•	Create Customer ✅ (already done)
+	•	Edit Customer
+	•	Create Account
+	•	Withdraw Money
+	•	Deposit Money
+	•	Check Balance
+	•	Transactions
+
+Let’s do step-by-step:
+
+⸻
+
+✅ Step 1: Create a Navigation Menu in dashboard.component.html
+
+Replace your dashboard.component.html with:
+
+<h2>🏦 Bank Dashboard</h2>
+
+<nav>
+  <ul>
+    <li><a routerLink="create-customer">Create Customer</a></li>
+    <li><a routerLink="edit-customer">Edit Customer</a></li>
+    <li><a routerLink="create-account">Create Account</a></li>
+    <li><a routerLink="withdraw">Withdraw Money</a></li>
+    <li><a routerLink="deposit">Deposit Money</a></li>
+    <li><a routerLink="balance">Check Balance</a></li>
+    <li><a routerLink="transactions">Transactions</a></li>
+  </ul>
+</nav>
+
+<hr />
+
+<!-- Route display for selected option -->
+<router-outlet></router-outlet>
+
+
+⸻
+
+✅ Step 2: Create Component for CreateCustomer
+
+Since you already implemented Create Customer inside the dashboard, let’s now move it to a dedicated component.
+
+Run this:
+
+ng generate component create-customer --standalone --flat --skip-tests
+
+Then move your form from dashboard.component.html into create-customer.component.html.
+
+⸻
+
+✅ Step 3: Update app.routes.ts
+
+You need nested routes under dashboard:
+
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { CreateCustomerComponent } from './create-customer.component'; // ✅ Import
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    children: [
+      { path: 'create-customer', component: CreateCustomerComponent },
+      // Placeholder for other features
+      { path: 'edit-customer', component: DummyComponent },
+      { path: 'create-account', component: DummyComponent },
+      { path: 'withdraw', component: DummyComponent },
+      { path: 'deposit', component: DummyComponent },
+      { path: 'balance', component: DummyComponent },
+      { path: 'transactions', component: DummyComponent }
+    ]
+  }
+];
+
+(You can use DummyComponent temporarily until those components are created.)
+
+⸻
+
+✅ Step 4: Verify Everything
+	1.	Go to /login → login with valid credentials.
+	2.	On success → navigate to /dashboard.
+	3.	Now you’ll see all links.
+	4.	Click “Create Customer” → should load the Create Customer form.
+
+⸻
+
+If you want, I’ll generate:
+	•	create-customer.component.ts
+	•	create-customer.component.html
+	•	Updated dashboard.component.html
+	•	Dummy components for the rest
+
+Let me know if you’d like the complete files 🚀
+
+
+
+Great! Let’s create the Create Customer page properly as a standalone Angular component, working inside your /dashboard.
+
+⸻
+
+✅ Step 1: Generate the Component
+
+If not already done, run this in your terminal:
+
+ng generate component create-customer --standalone --flat --skip-tests
+
+This will create create-customer.component.ts and create-customer.component.html.
+
+⸻
+
+✅ Step 2: create-customer.component.ts
+
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { BankService } from './bank.service';
+
+@Component({
+  selector: 'app-create-customer',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './create-customer.component.html'
+})
+export class CreateCustomerComponent {
+  loginId!: number;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  responseMessage = '';
+
+  constructor(private bankService: BankService) {}
+
+  onCreateCustomer() {
+    this.bankService.createCustomer(
+      this.loginId,
+      this.name,
+      this.email,
+      this.phone,
+      this.address,
+      this.dob
+    ).subscribe(
+      (res: string) => {
+        console.log('Success:', res);
+        this.responseMessage = res;
+      },
+      (error: any) => {
+        console.error('Error:', error);
+        this.responseMessage = 'Customer creation failed!';
+      }
+    );
+  }
+}
+
+
+⸻
+
+✅ Step 3: create-customer.component.html
+
+<h3>Create Customer</h3>
+
+<form (ngSubmit)="onCreateCustomer()">
+  <label>Login ID:</label>
+  <input type="number" [(ngModel)]="loginId" name="loginId" required /><br />
+
+  <label>Name:</label>
+  <input type="text" [(ngModel)]="name" name="name" required /><br />
+
+  <label>Email:</label>
+  <input type="email" [(ngModel)]="email" name="email" required /><br />
+
+  <label>Phone:</label>
+  <input type="text" [(ngModel)]="phone" name="phone" /><br />
+
+  <label>Address:</label>
+  <input type="text" [(ngModel)]="address" name="address" /><br />
+
+  <label>Date of Birth:</label>
+  <input type="date" [(ngModel)]="dob" name="dob" /><br /><br />
+
+  <button type="submit">Create</button>
+</form>
+
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
+
+
+⸻
+
+✅ Step 4: Update app.routes.ts
+
+Ensure this route exists under your /dashboard children:
+
+{
+  path: 'dashboard',
+  component: DashboardComponent,
+  children: [
+    { path: 'create-customer', component: CreateCustomerComponent }
+  ]
+}
+
+
+⸻
+
+✅ Step 5: Add Link in dashboard.component.html
+
+<nav>
+  <ul>
+    <li><a routerLink="create-customer">Create Customer</a></li>
+    <!-- other links can go here later -->
+  </ul>
+</nav>
+
+<router-outlet></router-outlet>
+
+
+⸻
+
+After all this, when you:
+	•	Log in
+	•	Navigate to /dashboard
+	•	Click “Create Customer”
+
+✅ You’ll see the form and be able to submit to your backend at http://localhost:8080/api/bank/customers.
+
+Let me know when you’re ready to add the next feature (like Edit Customer or Withdraw) — I’ll guide you step-by-step.
