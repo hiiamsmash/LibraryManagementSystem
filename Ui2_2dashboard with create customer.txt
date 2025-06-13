@@ -235,3 +235,162 @@ After all this, when you:
 ✅ You’ll see the form and be able to submit to your backend at http://localhost:8080/api/bank/customers.
 
 Let me know when you’re ready to add the next feature (like Edit Customer or Withdraw) — I’ll guide you step-by-step.
+
+
+
+
+////////::::::::::
+
+
+Sure! Here’s the complete setup for:
+	•	src/app/create-customer/ → component folder with 2 files
+	•	src/app/dashboard/ → dashboard with links and outlet
+	•	app.routes.ts → with child routes
+
+⸻
+
+✅ src/app/create-customer/create-customer.component.ts
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { BankService } from '../bank.service';
+
+@Component({
+  selector: 'app-create-customer',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './create-customer.component.html',
+})
+export class CreateCustomerComponent {
+  loginId!: number;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  responseMessage = '';
+
+  constructor(private bankService: BankService) {}
+
+  onCreateCustomer() {
+    this.bankService.createCustomer(
+      this.loginId,
+      this.name,
+      this.email,
+      this.phone,
+      this.address,
+      this.dob
+    ).subscribe(
+      (res: string) => {
+        console.log('Success:', res);
+        this.responseMessage = res;
+      },
+      (error: any) => {
+        console.error('Error:', error);
+        this.responseMessage = 'Customer creation failed!';
+      }
+    );
+  }
+}
+
+
+⸻
+
+✅ src/app/create-customer/create-customer.component.html
+
+<h3>Create Customer</h3>
+
+<form (ngSubmit)="onCreateCustomer()">
+  <label>Login ID:</label>
+  <input type="number" [(ngModel)]="loginId" name="loginId" required /><br />
+
+  <label>Name:</label>
+  <input type="text" [(ngModel)]="name" name="name" required /><br />
+
+  <label>Email:</label>
+  <input type="email" [(ngModel)]="email" name="email" required /><br />
+
+  <label>Phone:</label>
+  <input type="text" [(ngModel)]="phone" name="phone" /><br />
+
+  <label>Address:</label>
+  <input type="text" [(ngModel)]="address" name="address" /><br />
+
+  <label>Date of Birth:</label>
+  <input type="date" [(ngModel)]="dob" name="dob" /><br /><br />
+
+  <button type="submit">Create</button>
+</form>
+
+<p *ngIf="responseMessage">{{ responseMessage }}</p>
+
+
+⸻
+
+✅ src/app/dashboard/dashboard.component.ts
+
+import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './dashboard.component.html',
+})
+export class DashboardComponent {}
+
+
+⸻
+
+✅ src/app/dashboard/dashboard.component.html
+
+<h2>🏦 Bank Dashboard</h2>
+
+<nav>
+  <ul>
+    <li><a routerLink="create-customer">Create Customer</a></li>
+    <li><a routerLink="edit-customer">Edit Customer</a></li>
+    <li><a routerLink="create-account">Create Account</a></li>
+    <li><a routerLink="withdraw">Withdraw Money</a></li>
+    <li><a routerLink="deposit">Deposit Money</a></li>
+    <li><a routerLink="balance">Check Balance</a></li>
+    <li><a routerLink="transactions">Transactions</a></li>
+  </ul>
+</nav>
+
+<hr />
+
+<router-outlet></router-outlet>
+
+
+⸻
+
+✅ src/app/app.routes.ts
+
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { CreateCustomerComponent } from './create-customer/create-customer.component';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    children: [
+      { path: 'create-customer', component: CreateCustomerComponent },
+      // You can add other child components here later
+    ]
+  }
+];
+
+
+⸻
+
+Let me know when you’re ready for the next feature, like Edit Customer or Create Account, and I’ll give the full setup just like this.
