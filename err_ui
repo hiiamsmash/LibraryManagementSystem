@@ -1,3 +1,90 @@
+Great! Since your Spring Boot backend creates a reference number and stores the transaction date/time, we just need to ensure the Angular frontend displays both of these fields in the transaction history.
+
+⸻
+
+✅ Update: ViewTransactionsComponent
+
+📄 view-transactions.component.html
+
+Update the HTML table to show Reference No. and Transaction Date with Time:
+
+<h2>Transaction History</h2>
+
+<form (ngSubmit)="fetchTransactions()">
+  <label for="accountNumber">Account Number:</label>
+  <input type="number" [(ngModel)]="accountNumber" name="accountNumber" required>
+  <button type="submit">View Transactions</button>
+</form>
+
+<p *ngIf="errorMessage">{{ errorMessage }}</p>
+
+<table *ngIf="transactions.length > 0" border="1">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Account Number</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Reference No.</th>
+      <th>Date & Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let txn of transactions">
+      <td>{{ txn.transactionId }}</td>
+      <td>{{ txn.account.accountId }}</td>
+      <td>{{ txn.transactionType }}</td>
+      <td>{{ txn.amount }}</td>
+      <td>{{ txn.referenceNo }}</td>
+      <td>{{ txn.transactionDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+⸻
+
+✅ Backend: Ensure these fields are in the response
+
+Make sure your BankTransaction entity has these fields:
+
+private String referenceNo;
+private Date transactionDate;
+
+And your @GetMapping("/account/{accountNumber}/transactions") returns a list of complete BankTransaction objects, like:
+
+[
+  {
+    "transactionId": 1,
+    "transactionType": "WITHDRAW",
+    "amount": 500,
+    "referenceNo": "WITH202506091538327243",
+    "transactionDate": "2025-06-09T15:38:32.000+05:30",
+    "account": {
+      "accountId": 1001
+    }
+  }
+]
+
+
+⸻
+
+If your Spring Boot backend hides fields or uses DTOs, then include referenceNo and transactionDate in your DTO or entity serialization.
+
+Let me know if you want to format the reference number differently or add export/download options!
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // File: src/app/app.component.ts
 import { Component } from '@angular/core';
