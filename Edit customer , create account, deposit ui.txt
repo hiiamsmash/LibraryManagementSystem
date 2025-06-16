@@ -229,3 +229,117 @@ Also add a link in dashboard.component.html:
 ✅ Now when you visit http://localhost:4200/dashboard/create-account, you’ll see the account creation form. On submit, it will call your Spring Boot backend and show the backend response.
 
 Let me know when you’re ready for the next feature — e.g., Withdraw, Deposit, Balance Check, or Transaction History.
+
+
+
+
+!////://////:::::::://///
+
+
+Here’s how you can implement the Deposit Money feature in Angular that works with your provided Spring Boot backend.
+
+⸻
+
+✅ 1. Create DepositMoneyComponent
+
+📄 src/app/deposit-money/deposit-money.component.ts
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+
+@Component({
+  selector: 'app-deposit-money',
+  standalone: true,
+  imports: [CommonModule, FormsModule, HttpClientModule],
+  templateUrl: './deposit-money.component.html',
+  styleUrls: ['./deposit-money.component.css']
+})
+export class DepositMoneyComponent {
+  accountId!: number;
+  amount!: number;
+
+  constructor(private http: HttpClient) {}
+
+  onDeposit() {
+    const formData = new FormData();
+    formData.append('amount', this.amount.toString());
+
+    this.http.post(
+      `http://localhost:8080/api/bank/accounts/${this.accountId}/deposit`,
+      formData,
+      { responseType: 'text' }
+    ).subscribe({
+      next: (res) => {
+        alert(res);
+      },
+      error: (err) => {
+        alert('Deposit failed!');
+        console.error(err);
+      }
+    });
+  }
+}
+
+
+⸻
+
+✅ 2. Deposit Money HTML Template
+
+📄 src/app/deposit-money/deposit-money.component.html
+
+<h2>Deposit Money</h2>
+
+<form (ngSubmit)="onDeposit()">
+  <label for="accountId">Account ID:</label>
+  <input type="number" [(ngModel)]="accountId" name="accountId" required>
+
+  <label for="amount">Amount:</label>
+  <input type="number" [(ngModel)]="amount" name="amount" required>
+
+  <button type="submit">Deposit</button>
+</form>
+
+
+⸻
+
+✅ 3. Update app.routes.ts
+
+Make sure the route is defined:
+
+📄 src/app/app.routes.ts
+
+import { DepositMoneyComponent } from './deposit-money/deposit-money.component';
+
+export const routes: Routes = [
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    children: [
+      { path: 'deposit-money', component: DepositMoneyComponent },
+      // other routes
+    ]
+  }
+];
+
+
+⸻
+
+✅ 4. Add Link in Dashboard
+
+📄 src/app/dashboard/dashboard.component.html
+
+<nav>
+  <!-- other links -->
+  <a routerLink="deposit-money">Deposit Money</a>
+</nav>
+
+<router-outlet></router-outlet>
+
+
+⸻
+
+Once this is done, run ng serve, navigate to the dashboard, and click on “Deposit Money” to access the form. It will hit your Spring Boot endpoint and display the response.
+
+Let me know when you’re ready for Withdraw Money next.
