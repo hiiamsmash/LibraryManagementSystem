@@ -343,3 +343,112 @@ export const routes: Routes = [
 Once this is done, run ng serve, navigate to the dashboard, and click on “Deposit Money” to access the form. It will hit your Spring Boot endpoint and display the response.
 
 Let me know when you’re ready for Withdraw Money next.
+
+/////////////////:::::::////////
+
+Here’s the complete Withdraw Money feature for your Angular app, matching your Spring Boot endpoint:
+
+⸻
+
+✅ 1. WithdrawMoneyComponent
+
+📄 src/app/withdraw-money/withdraw-money.component.ts
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+
+@Component({
+  selector: 'app-withdraw-money',
+  standalone: true,
+  imports: [CommonModule, FormsModule, HttpClientModule],
+  templateUrl: './withdraw-money.component.html',
+  styleUrls: ['./withdraw-money.component.css']
+})
+export class WithdrawMoneyComponent {
+  accountNumber!: number;
+  amount!: number;
+
+  constructor(private http: HttpClient) {}
+
+  onWithdraw() {
+    const formData = new FormData();
+    formData.append('amount', this.amount.toString());
+
+    this.http.post(
+      `http://localhost:8080/api/bank/accounts/${this.accountNumber}/withdraw`,
+      formData,
+      { responseType: 'text' }
+    ).subscribe({
+      next: (res) => {
+        alert(res);
+      },
+      error: (err) => {
+        alert('Withdrawal failed!');
+        console.error(err);
+      }
+    });
+  }
+}
+
+
+⸻
+
+✅ 2. WithdrawMoneyComponent HTML
+
+📄 src/app/withdraw-money/withdraw-money.component.html
+
+<h2>Withdraw Money</h2>
+
+<form (ngSubmit)="onWithdraw()">
+  <label for="accountNumber">Account Number:</label>
+  <input type="number" [(ngModel)]="accountNumber" name="accountNumber" required>
+
+  <label for="amount">Amount:</label>
+  <input type="number" [(ngModel)]="amount" name="amount" required>
+
+  <button type="submit">Withdraw</button>
+</form>
+
+
+⸻
+
+✅ 3. Update Routes
+
+📄 src/app/app.routes.ts
+
+Make sure you import and add the route:
+
+import { WithdrawMoneyComponent } from './withdraw-money/withdraw-money.component';
+
+export const routes: Routes = [
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    children: [
+      { path: 'withdraw-money', component: WithdrawMoneyComponent },
+      // other routes
+    ]
+  }
+];
+
+
+⸻
+
+✅ 4. Link in Dashboard
+
+📄 src/app/dashboard/dashboard.component.html
+
+<nav>
+  <!-- other links -->
+  <a routerLink="withdraw-money">Withdraw Money</a>
+</nav>
+
+<router-outlet></router-outlet>
+
+
+⸻
+
+Now you can withdraw money by visiting http://localhost:4200/dashboard/withdraw-money.
+Let me know when you’re ready for Check Balance or Transaction History features!
