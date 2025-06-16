@@ -75,12 +75,22 @@ export class EditCustomerComponent {
     if (this.address) formData.set('address', this.address);
     if (this.dob) formData.set('dob', this.dob);
 
-    this.http.put(`http://localhost:8080/api/bank/customers/${this.customerId}`, formData.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    }).subscribe({
-      next: (res) => alert('Customer updated successfully!'),
-      error: (err) => alert('Update failed!'),
-    });
+    this.http.put(
+  `http://localhost:8080/api/bank/customers/${this.customerId}`,
+  formData.toString(),
+  {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    responseType: 'text' // <-- Tell Angular to treat response as plain text
+  }
+).subscribe({
+  next: (res) => {
+    alert(res); // This will now show "Customer updated successfully"
+  },
+  error: (err) => {
+    console.error(err);
+    alert('Update failed!');
+  }
+});
   }
 }
 
