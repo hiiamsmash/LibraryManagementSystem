@@ -1,0 +1,131 @@
+Great! Let’s now create the Edit Customer page in Angular 18 that sends a PUT request to your Spring Boot backend.
+
+⸻
+
+✅ Backend Endpoint (as you gave):
+
+PUT http://localhost:8080/api/bank/customers/{customerId}
+
+With form-data (or application/x-www-form-urlencoded):
+	•	name
+	•	email
+	•	phone (optional)
+	•	address (optional)
+	•	dob (optional, yyyy-MM-dd)
+
+⸻
+
+✅ Step 1: Add Route
+
+In app.routes.ts:
+
+{
+  path: 'dashboard',
+  component: DashboardComponent,
+  children: [
+    {
+      path: 'create-customer',
+      loadComponent: () => import('./create-customer/create-customer.component').then(m => m.CreateCustomerComponent)
+    },
+    {
+      path: 'edit-customer',
+      loadComponent: () => import('./edit-customer/edit-customer.component').then(m => m.EditCustomerComponent)
+    }
+  ]
+}
+
+
+⸻
+
+✅ Step 2: Create Folder & Component
+
+ng generate component edit-customer --standalone --flat --module app
+
+
+⸻
+
+✅ Step 3: edit-customer.component.ts
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-edit-customer',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './edit-customer.component.html',
+})
+export class EditCustomerComponent {
+  customerId = '';
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+
+  constructor(private http: HttpClient) {}
+
+  onUpdateCustomer() {
+    const formData = new URLSearchParams();
+    if (this.name) formData.set('name', this.name);
+    if (this.email) formData.set('email', this.email);
+    if (this.phone) formData.set('phone', this.phone);
+    if (this.address) formData.set('address', this.address);
+    if (this.dob) formData.set('dob', this.dob);
+
+    this.http.put(`http://localhost:8080/api/bank/customers/${this.customerId}`, formData.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }).subscribe({
+      next: (res) => alert('Customer updated successfully!'),
+      error: (err) => alert('Update failed!'),
+    });
+  }
+}
+
+
+⸻
+
+✅ Step 4: edit-customer.component.html
+
+<h2>Edit Customer</h2>
+<form (ngSubmit)="onUpdateCustomer()">
+  <label>Customer ID:
+    <input type="text" [(ngModel)]="customerId" name="customerId" required>
+  </label><br>
+
+  <label>Name:
+    <input type="text" [(ngModel)]="name" name="name">
+  </label><br>
+
+  <label>Email:
+    <input type="email" [(ngModel)]="email" name="email">
+  </label><br>
+
+  <label>Phone:
+    <input type="text" [(ngModel)]="phone" name="phone">
+  </label><br>
+
+  <label>Address:
+    <input type="text" [(ngModel)]="address" name="address">
+  </label><br>
+
+  <label>Date of Birth:
+    <input type="date" [(ngModel)]="dob" name="dob">
+  </label><br>
+
+  <button type="submit">Update Customer</button>
+</form>
+
+
+⸻
+
+✅ Step 5: Add link in dashboard.component.html
+
+<a routerLink="edit-customer">Edit Customer</a>
+
+
+⸻
+
+Let me know when you want to move on to Create Account, Withdraw, Deposit, or Transactions!
