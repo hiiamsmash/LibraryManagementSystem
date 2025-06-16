@@ -559,3 +559,119 @@ import { ViewBalanceComponent } from './view-balance/view-balance.component';
 Now when you go to http://localhost:4200/dashboard/view-balance, you can enter an accountId and see the balance.
 
 Let me know when you’re ready for View Transactions or want to polish the UI.
+
+
+
+///:::::///////////////:/::://////
+
+
+Here’s how to implement the “View Transactions” feature in Angular, based on your Spring Boot backend:
+
+⸻
+
+✅ 1. ViewTransactionsComponent
+
+📄 src/app/view-transactions/view-transactions.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-view-transactions',
+  standalone: true,
+  imports: [CommonModule, FormsModule, HttpClientModule],
+  templateUrl: './view-transactions.component.html',
+  styleUrls: ['./view-transactions.component.css']
+})
+export class ViewTransactionsComponent {
+  accountNumber!: number;
+  transactions: any[] = [];
+  errorMessage: string = '';
+
+  constructor(private http: HttpClient) {}
+
+  fetchTransactions() {
+    this.http.get<any[]>(`http://localhost:8080/api/bank/account/${this.accountNumber}/transactions`)
+      .subscribe({
+        next: (res) => {
+          this.transactions = res;
+          this.errorMessage = '';
+        },
+        error: (err) => {
+          this.errorMessage = 'Failed to fetch transactions.';
+          this.transactions = [];
+          console.error(err);
+        }
+      });
+  }
+}
+
+
+⸻
+
+✅ 2. view-transactions.component.html
+
+<h2>Transaction History</h2>
+
+<form (ngSubmit)="fetchTransactions()">
+  <label for="accountNumber">Account Number:</label>
+  <input type="number" [(ngModel)]="accountNumber" name="accountNumber" required>
+  <button type="submit">View Transactions</button>
+</form>
+
+<p *ngIf="errorMessage">{{ errorMessage }}</p>
+
+<table *ngIf="transactions.length > 0" border="1">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Account Number</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let txn of transactions">
+      <td>{{ txn.transactionId }}</td>
+      <td>{{ txn.account.accountId }}</td>
+      <td>{{ txn.transactionType }}</td>
+      <td>{{ txn.amount }}</td>
+      <td>{{ txn.transactionDate | date:'short' }}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+⸻
+
+✅ 3. Add route in app.routes.ts
+
+import { ViewTransactionsComponent } from './view-transactions/view-transactions.component';
+
+{
+  path: 'dashboard',
+  component: DashboardComponent,
+  children: [
+    // ... other routes
+    { path: 'view-transactions', component: ViewTransactionsComponent }
+  ]
+}
+
+
+⸻
+
+✅ 4. Add link in dashboard.component.html
+
+<a routerLink="view-transactions">View Transactions</a>
+
+
+⸻
+
+Now you can navigate to
+http://localhost:4200/dashboard/view-transactions,
+enter an account number, and view the full transaction history.
+
+Let me know if you’d like filtering, pagination, or styling next!
