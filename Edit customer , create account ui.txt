@@ -139,3 +139,93 @@ export class EditCustomerComponent {
 ⸻
 
 Let me know when you want to move on to Create Account, Withdraw, Deposit, or Transactions!
+
+
+
+////////////////////
+
+Here’s how you can implement the Create Account functionality in your Angular 18 frontend that works with your Spring Boot backend.
+
+⸻
+
+🔧 1. Generate CreateAccountComponent
+
+ng generate component create-account
+
+
+⸻
+
+📄 2. create-account.component.html
+
+<h2>Create Account</h2>
+
+<form (ngSubmit)="onCreateAccount()">
+  <label for="customerId">Customer ID:</label>
+  <input type="number" id="customerId" [(ngModel)]="customerId" name="customerId" required />
+
+  <label for="accountTypeId">Account Type ID:</label>
+  <input type="number" id="accountTypeId" [(ngModel)]="accountTypeId" name="accountTypeId" required />
+
+  <button type="submit">Create Account</button>
+</form>
+
+
+⸻
+
+📄 3. create-account.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+
+@Component({
+  selector: 'app-create-account',
+  templateUrl: './create-account.component.html',
+  standalone: true,
+  imports: []
+})
+export class CreateAccountComponent {
+  customerId!: number;
+  accountTypeId!: number;
+
+  constructor(private http: HttpClient) {}
+
+  onCreateAccount() {
+    const formData = new HttpParams()
+      .set('customerId', this.customerId)
+      .set('accountTypeId', this.accountTypeId);
+
+    this.http.post('http://localhost:8080/api/bank/accounts', formData.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      responseType: 'text'
+    }).subscribe({
+      next: (res) => {
+        alert(res); // success message from backend
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Account creation failed!');
+      }
+    });
+  }
+}
+
+
+⸻
+
+🛣️ 4. Add route in app.routes.ts or your dashboard.routes.ts
+
+{
+  path: 'dashboard/create-account',
+  component: CreateAccountComponent
+}
+
+Also add a link in dashboard.component.html:
+
+<a routerLink="/dashboard/create-account">Create Account</a>
+
+
+⸻
+
+✅ Now when you visit http://localhost:4200/dashboard/create-account, you’ll see the account creation form. On submit, it will call your Spring Boot backend and show the backend response.
+
+Let me know when you’re ready for the next feature — e.g., Withdraw, Deposit, Balance Check, or Transaction History.
