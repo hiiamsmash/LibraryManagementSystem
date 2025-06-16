@@ -452,3 +452,110 @@ export const routes: Routes = [
 
 Now you can withdraw money by visiting http://localhost:4200/dashboard/withdraw-money.
 Let me know when you’re ready for Check Balance or Transaction History features!
+
+
+
+
+//////////////////:::::////////
+
+
+
+
+Here’s the View Balance feature in Angular based on your Spring Boot backend.
+
+⸻
+
+✅ 1. ViewBalanceComponent
+
+📄 src/app/view-balance/view-balance.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-view-balance',
+  standalone: true,
+  imports: [CommonModule, FormsModule, HttpClientModule],
+  templateUrl: './view-balance.component.html',
+  styleUrls: ['./view-balance.component.css']
+})
+export class ViewBalanceComponent {
+  accountId!: number;
+  balanceMessage: string = '';
+
+  constructor(private http: HttpClient) {}
+
+  onCheckBalance() {
+    this.http.get(`http://localhost:8080/api/bank/accounts/${this.accountId}/balance`, { responseType: 'text' })
+      .subscribe({
+        next: (res) => {
+          this.balanceMessage = res;
+        },
+        error: (err) => {
+          this.balanceMessage = 'Balance check failed!';
+          console.error(err);
+        }
+      });
+  }
+}
+
+
+⸻
+
+✅ 2. ViewBalanceComponent HTML
+
+📄 src/app/view-balance/view-balance.component.html
+
+<h2>View Balance</h2>
+
+<form (ngSubmit)="onCheckBalance()">
+  <label for="accountId">Account ID:</label>
+  <input type="number" [(ngModel)]="accountId" name="accountId" required>
+
+  <button type="submit">Check Balance</button>
+</form>
+
+<p *ngIf="balanceMessage">{{ balanceMessage }}</p>
+
+
+⸻
+
+✅ 3. Update Routes
+
+📄 src/app/app.routes.ts
+
+Add this to the dashboard’s child routes:
+
+import { ViewBalanceComponent } from './view-balance/view-balance.component';
+
+{
+  path: 'dashboard',
+  component: DashboardComponent,
+  children: [
+    { path: 'view-balance', component: ViewBalanceComponent },
+    // other routes
+  ]
+}
+
+
+⸻
+
+✅ 4. Link in Dashboard
+
+📄 src/app/dashboard/dashboard.component.html
+
+<nav>
+  <!-- other links -->
+  <a routerLink="view-balance">Check Balance</a>
+</nav>
+
+<router-outlet></router-outlet>
+
+
+⸻
+
+Now when you go to http://localhost:4200/dashboard/view-balance, you can enter an accountId and see the balance.
+
+Let me know when you’re ready for View Transactions or want to polish the UI.
