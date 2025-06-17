@@ -1,3 +1,103 @@
+Perfect — you want distinct messages in the Postman response:
+	•	"Account not found" if the account doesn’t exist.
+	•	"Insufficient balance" if the balance is too low.
+
+⸻
+
+✅ Best Practice: Use Custom Exceptions for Clean Code
+
+But to keep it simple within your current structure, we’ll just return clear messages from the controller based on service checks.
+
+⸻
+
+✅ Final Working Code (Exactly as You Need)
+
+🔧 Controller Method:
+
+@PostMapping("/accounts/{accountNumber}/withdraw")
+public ResponseEntity<String> withdraw(
+        @PathVariable Long accountNumber,
+        @RequestParam BigDecimal amount) {
+    try {
+        String result = bankService.withdraw(accountNumber, amount);
+
+        return ResponseEntity.ok(result);  // Withdrawal successful
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());  // Account not found or Insufficient balance
+    } catch (Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Withdrawal failed due to server error: " + e.getMessage());
+    }
+}
+
+
+⸻
+
+🔧 Service Method:
+
+Change the return type to String (since now you return success message from service):
+
+@Transactional
+public String withdraw(Long accountNumber, BigDecimal amount) {
+    Account account = accountRepository.findById(accountNumber).orElse(null);
+
+    if (account == null) {
+        throw new IllegalArgumentException("Account not found.");
+    }
+
+    if (account.getBalance().compareTo(amount) < 0) {
+        throw new IllegalArgumentException("Insufficient balance.");
+    }
+
+    account.setBalance(account.getBalance().subtract(amount));
+    accountRepository.save(account);
+
+    BankTransaction transaction = new BankTransaction();
+    transaction.setAccount(account);
+    transaction.setTransactionType("WITHDRAW");
+    transaction.setAmount(amount);
+    transaction.setTransactionDate(new Date());
+    transaction.setReferenceNo(generateReferenceNo("WITH"));
+
+    transactionRepository.save(transaction);
+
+    return String.format("Withdrawal successful. New balance: %.2f", account.getBalance());
+}
+
+
+⸻
+
+✅ Now in Postman you will get:
+
+❌ If account doesn’t exist:
+
+400 Bad Request
+Account not found.
+
+❌ If balance is insufficient:
+
+400 Bad Request
+Insufficient balance.
+
+✅ If success:
+
+200 OK
+Withdrawal successful. New balance: 5000.00
+
+
+⸻
+
+Let me know if you want to return a JSON object instead of plain text!
+
+
+
+
+
+
+
 1. User Registration & Login
 java
 // User Registration
