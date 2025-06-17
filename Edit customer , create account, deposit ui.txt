@@ -675,3 +675,133 @@ http://localhost:4200/dashboard/view-transactions,
 enter an account number, and view the full transaction history.
 
 Let me know if you’d like filtering, pagination, or styling next!
+
+
+
+/////////download csv/////
+
+To export transactions to CSV in your Angular app, you can follow these steps:
+
+⸻
+
+✅ Step-by-Step: Export Transactions to CSV in Angular
+
+✅ 1. Install FileSaver and xlsx
+
+Run this in your terminal:
+
+npm install file-saver xlsx
+
+
+⸻
+
+✅ 2. Create the csv-export.service.ts (or add to your transactions component)
+
+// src/app/services/csv-export.service.ts
+import * as XLSX from 'xlsx';
+import * as FileSaver from 'file-saver';
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CsvExportService {
+  constructor() {}
+
+  exportAsCSV(data: any[], filename: string): void {
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+    const workbook: XLSX.WorkBook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
+    const excelBuffer: any = XLSX.write(workbook, {
+      bookType: 'csv',
+      type: 'array',
+    });
+    const blobData: Blob = new Blob([excelBuffer], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    FileSaver.saveAs(blobData, `${filename}.csv`);
+  }
+}
+
+
+⸻
+
+✅ 3. Use It in Your view-transactions.component.ts
+
+Modify your component:
+
+import { Component } from '@angular/core';
+import { CsvExportService } from '../services/csv-export.service';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-view-transactions',
+  templateUrl: './view-transactions.component.html',
+})
+export class ViewTransactionsComponent {
+  transactions: any[] = [];
+  accountNumber: number = 0;
+
+  constructor(private http: HttpClient, private csvService: CsvExportService) {}
+
+  getTransactions() {
+    this.http
+      .get<any[]>(`http://localhost:8080/api/bank/account/${this.accountNumber}/transactions`)
+      .subscribe((data) => {
+        this.transactions = data;
+      });
+  }
+
+  downloadCSV() {
+    if (this.transactions.length > 0) {
+      this.csvService.exportAsCSV(this.transactions, `transactions_${this.accountNumber}`);
+    }
+  }
+}
+
+
+⸻
+
+✅ 4. Update the Template (view-transactions.component.html)
+
+<div>
+  <label for="accountNumber">Account Number:</label>
+  <input type="number" [(ngModel)]="accountNumber" />
+  <button (click)="getTransactions()">Get Transactions</button>
+</div>
+
+<table *ngIf="transactions.length > 0">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Account No</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Date</th>
+      <th>Reference No</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let t of transactions">
+      <td>{{ t.transactionId }}</td>
+      <td>{{ t.account.accountId }}</td>
+      <td>{{ t.transactionType }}</td>
+      <td>{{ t.amount }}</td>
+      <td>{{ t.transactionDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+      <td>{{ t.referenceNo }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<button (click)="downloadCSV()" *ngIf="transactions.length > 0">Download CSV</button>
+
+
+⸻
+
+✅ Done!
+
+Click Download CSV, and a file like transactions_123456.csv will be downloaded containing all transaction data.
+
+Let me know if you want:
+	•	Excel (.xlsx) format instead
+	•	Date range filters before export
+	•	Server-side CSV export in Spring Boot
