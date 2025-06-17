@@ -1,3 +1,29 @@
+<div class="container">
+  <h2>Withdraw Money</h2>
+
+  <form (ngSubmit)="withdraw()">
+    <div>
+      <label>Account Number:</label>
+      <input type="number" [(ngModel)]="accountNumber" name="accountNumber" required />
+    </div>
+
+    <div>
+      <label>Amount:</label>
+      <input type="number" [(ngModel)]="amount" name="amount" required />
+    </div>
+
+    <button type="submit">Withdraw</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+</div>
+
+
+
+
+
+
+
 import { Component } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
