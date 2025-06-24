@@ -1,3 +1,140 @@
+
+Sure! Here’s the complete and fully working code for both:
+
+⸻
+
+✅ csv-export.service.ts
+
+// src/app/services/csv-export.service.ts
+
+import { Injectable } from '@angular/core';
+import * as XLSX from 'xlsx';
+import * as FileSaver from 'file-saver';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CsvExportService {
+  exportAsCSV(data: any[], filename: string): void {
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data, { skipHeader: false });
+    const csvData = XLSX.write(
+      { Sheets: { data: worksheet }, SheetNames: ['data'] },
+      { bookType: 'csv', type: 'array' }
+    );
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    FileSaver.saveAs(blob, `${filename}.csv`);
+  }
+}
+
+
+⸻
+
+✅ view-transactions.component.ts
+
+// src/app/view-transactions/view-transactions.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { CsvExportService } from '../services/csv-export.service';
+
+@Component({
+  selector: 'app-view-transactions',
+  templateUrl: './view-transactions.component.html',
+})
+export class ViewTransactionsComponent {
+  accountNumber!: number;
+  transactions: any[] = [];
+  message = '';
+
+  constructor(private http: HttpClient, private csvService: CsvExportService) {}
+
+  getTransactions() {
+    const url = `http://localhost:8080/api/bank/account/${this.accountNumber}/transactions`;
+    this.http.get<any[]>(url).subscribe({
+      next: (data) => {
+        this.transactions = data;
+        this.message = `Found ${data.length} transactions.`;
+        console.log('Fetched transactions:', data);
+      },
+      error: () => {
+        this.message = 'Failed to fetch transactions.';
+      }
+    });
+  }
+
+  downloadCSV() {
+    const flattenedTransactions = this.transactions.map((txn) => ({
+      transactionId: txn.transactionId,
+      transactionType: txn.transactionType,
+      amount: txn.amount,
+      transactionDate: new Date(txn.transactionDate).toLocaleString(),
+      referenceNo: txn.referenceNo,
+      accountNumber: txn.account?.accountNumber ?? 'N/A'  // ✅ Corrected
+    }));
+
+    console.log('Flattened for CSV:', flattenedTransactions);
+
+    this.csvService.exportAsCSV(flattenedTransactions, `transactions_${this.accountNumber}`);
+  }
+}
+
+
+⸻
+
+✅ Example view-transactions.component.html
+
+<div class="container">
+  <h2>View Transactions</h2>
+
+  <form (ngSubmit)="getTransactions()">
+    <label>Account Number:</label>
+    <input type="number" [(ngModel)]="accountNumber" name="accountNumber" required />
+    <button type="submit">Get Transactions</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+
+  <table *ngIf="transactions.length > 0" border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Ref No</th>
+        <th>Account Number</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of transactions">
+        <td>{{ t.transactionId }}</td>
+        <td>{{ t.transactionType }}</td>
+        <td>{{ t.amount }}</td>
+        <td>{{ t.transactionDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+        <td>{{ t.referenceNo }}</td>
+        <td>{{ t.account?.accountNumber }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button *ngIf="transactions.length > 0" (click)="downloadCSV()">Download CSV</button>
+</div>
+
+
+⸻
+
+Let me know if you want to export Excel .xlsx instead of CSV, or want date filters for export!
+
+
+
+
+
+
+
+
+
+//////////
+
 Great! Since your Spring Boot backend creates a reference number and stores the transaction date/time, we just need to ensure the Angular frontend displays both of these fields in the transaction history.
 
 ⸻
