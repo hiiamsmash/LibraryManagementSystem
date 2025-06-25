@@ -1,3 +1,175 @@
+Here is the complete login and create customer implementation in Angular, updated to:
+
+✅ Automatically store the logged-in loginId
+✅ Use it in create customer
+✅ Hide the loginId from the user
+✅ Submit it correctly to the backend
+
+⸻
+
+✅ 1. login.component.ts
+
+// src/app/login/login.component.ts
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+})
+export class LoginComponent {
+  username = '';
+  password = '';
+  message = '';
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  onLogin() {
+    const formData = new FormData();
+    formData.append('username', this.username);
+    formData.append('password', this.password);
+
+    this.http.post<any>('http://localhost:8080/api/bank/login', formData).subscribe({
+      next: (res) => {
+        if (res.loginId) {
+          localStorage.setItem('loginId', res.loginId.toString()); // ✅ Save loginId
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.message = res.message || 'Login failed!';
+        }
+      },
+      error: () => {
+        this.message = 'Login failed!';
+      },
+    });
+  }
+}
+
+
+⸻
+
+✅ 2. login.component.html
+
+<!-- src/app/login/login.component.html -->
+<div class="container">
+  <h2>Login</h2>
+  <form (ngSubmit)="onLogin()">
+    <label>Username:</label>
+    <input type="text" [(ngModel)]="username" name="username" required />
+
+    <label>Password:</label>
+    <input type="password" [(ngModel)]="password" name="password" required />
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ 3. create-customer.component.ts
+
+// src/app/create-customer/create-customer.component.ts
+import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+
+@Component({
+  selector: 'app-create-customer',
+  templateUrl: './create-customer.component.html',
+})
+export class CreateCustomerComponent implements OnInit {
+  loginId: number = 0;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  message = '';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    const storedId = localStorage.getItem('loginId');
+    this.loginId = storedId ? parseInt(storedId) : 0;
+  }
+
+  onCreateCustomer() {
+    const params = new HttpParams()
+      .set('loginId', this.loginId)
+      .set('name', this.name)
+      .set('email', this.email)
+      .set('phone', this.phone)
+      .set('address', this.address)
+      .set('dob', this.dob);
+
+    this.http.post('http://localhost:8080/api/bank/customers', params, { responseType: 'text' })
+      .subscribe({
+        next: (res) => {
+          this.message = res;
+        },
+        error: () => {
+          this.message = 'Customer creation failed!';
+        }
+      });
+  }
+}
+
+
+⸻
+
+✅ 4. create-customer.component.html
+
+<!-- src/app/create-customer/create-customer.component.html -->
+<div class="container">
+  <h2>Create Customer</h2>
+  <form (ngSubmit)="onCreateCustomer()">
+    <!-- Hidden loginId -->
+    <input type="hidden" [(ngModel)]="loginId" name="loginId" />
+
+    <label>Name:</label>
+    <input type="text" [(ngModel)]="name" name="name" required />
+
+    <label>Email:</label>
+    <input type="email" [(ngModel)]="email" name="email" required />
+
+    <label>Phone:</label>
+    <input type="text" [(ngModel)]="phone" name="phone" />
+
+    <label>Address:</label>
+    <input type="text" [(ngModel)]="address" name="address" />
+
+    <label>Date of Birth:</label>
+    <input type="date" [(ngModel)]="dob" name="dob" />
+
+    <button type="submit">Create</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ Summary of Required Backend Changes
+
+Your Spring Boot backend should return a JSON object like:
+
+{
+  "loginId": 5,
+  "username": "veer",
+  "message": "Login successful"
+}
+
+Let me know if you want me to also give the matching backend controller method!
+
+
+
+
+
+///////////
 Excellent question — and you’re absolutely right to ask!
 
 ⸻
