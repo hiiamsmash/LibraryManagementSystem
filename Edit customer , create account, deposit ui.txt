@@ -1,3 +1,83 @@
+import { Component } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-edit-customer',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './edit-customer.component.html',
+})
+export class EditCustomerComponent {
+  customerId: number | null = null;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  message = '';
+
+  constructor(private http: HttpClient) {}
+
+  fetchCustomer() {
+    if (!this.customerId) return;
+
+    this.http.get<any>(`http://localhost:8080/api/bank/customer/${this.customerId}`).subscribe({
+      next: (data) => {
+        this.name = data.name || '';
+        this.email = data.email || '';
+        this.phone = data.phone || '';
+        this.address = data.address || '';
+        this.dob = data.dob ? data.dob.substring(0, 10) : ''; // format yyyy-MM-dd
+        this.message = '';
+      },
+      error: () => {
+        this.message = 'Customer not found!';
+        this.clearFields();
+      }
+    });
+  }
+
+  clearFields() {
+    this.name = '';
+    this.email = '';
+    this.phone = '';
+    this.address = '';
+    this.dob = '';
+  }
+
+  onUpdateCustomer() {
+    if (!this.name || !this.email) {
+      this.message = 'Name and Email are required!';
+      return;
+    }
+
+    const params = new HttpParams()
+      .set('name', this.name)
+      .set('email', this.email)
+      .set('phone', this.phone || '')
+      .set('address', this.address || '')
+      .set('dob', this.dob || '');
+
+    this.http.put(
+      `http://localhost:8080/api/bank/customers/${this.customerId}`,
+      {}, // empty body
+      { params, responseType: 'text' }
+    ).subscribe({
+      next: (res) => this.message = res,
+      error: (err) => this.message = 'Update failed: ' + (err.error || 'Unexpected error')
+    });
+  }
+}
+
+
+
+
+
+
+
+
 edit customer---
 
 Great! Let’s update the Edit Customer page to:
