@@ -1,3 +1,154 @@
+edit customer---
+
+Great! Let’s update the Edit Customer page to:
+
+✅ Auto-fill fields (name, email, etc.) after entering the Customer ID
+✅ Let you edit those values
+✅ Submit updated info to the backend
+
+⸻
+
+✅ Backend Endpoint You Already Have:
+
+GET  /api/bank/customer/{customerId}      --> to fetch customer info  
+PUT  /api/bank/customers/{customerId}     --> to update customer info  
+
+
+⸻
+
+✅ Updated Angular Implementation
+
+⸻
+
+✅ 1. edit-customer.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-edit-customer',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './edit-customer.component.html',
+})
+export class EditCustomerComponent {
+  customerId: number | null = null;
+  name = '';
+  email = '';
+  phone = '';
+  address = '';
+  dob = '';
+  message = '';
+
+  constructor(private http: HttpClient) {}
+
+  fetchCustomer() {
+    if (this.customerId) {
+      this.http.get<any>(`http://localhost:8080/api/bank/customer/${this.customerId}`).subscribe({
+        next: (data) => {
+          this.name = data.name;
+          this.email = data.email;
+          this.phone = data.phone;
+          this.address = data.address;
+          this.dob = data.dob?.substring(0, 10); // Format to yyyy-MM-dd
+          this.message = '';
+        },
+        error: () => {
+          this.message = 'Customer not found!';
+          this.clearFields();
+        }
+      });
+    }
+  }
+
+  clearFields() {
+    this.name = '';
+    this.email = '';
+    this.phone = '';
+    this.address = '';
+    this.dob = '';
+  }
+
+  onUpdateCustomer() {
+    const params = new URLSearchParams();
+    if (this.name) params.set('name', this.name);
+    if (this.email) params.set('email', this.email);
+    if (this.phone) params.set('phone', this.phone);
+    if (this.address) params.set('address', this.address);
+    if (this.dob) params.set('dob', this.dob);
+
+    this.http.put(`http://localhost:8080/api/bank/customers/${this.customerId}`, params, { responseType: 'text' })
+      .subscribe({
+        next: (res) => this.message = res,
+        error: (err) => this.message = 'Update failed: ' + err.error
+      });
+  }
+}
+
+
+⸻
+
+✅ 2. edit-customer.component.html
+
+<div class="container">
+  <h2>Edit Customer</h2>
+
+  <label>Enter Customer ID:</label>
+  <input type="number" [(ngModel)]="customerId" name="customerId" />
+  <button (click)="fetchCustomer()">Fetch</button>
+
+  <hr />
+
+  <form (ngSubmit)="onUpdateCustomer()" *ngIf="customerId && name">
+    <label>Name:</label>
+    <input type="text" [(ngModel)]="name" name="name" required />
+
+    <label>Email:</label>
+    <input type="email" [(ngModel)]="email" name="email" required />
+
+    <label>Phone:</label>
+    <input type="text" [(ngModel)]="phone" name="phone" />
+
+    <label>Address:</label>
+    <input type="text" [(ngModel)]="address" name="address" />
+
+    <label>Date of Birth:</label>
+    <input type="date" [(ngModel)]="dob" name="dob" />
+
+    <button type="submit">Update Customer</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ 3. Add Route in app.routes.ts
+
+{
+  path: 'dashboard/edit-customer',
+  component: EditCustomerComponent
+}
+
+And in your dashboard nav:
+
+<a routerLink="edit-customer">Edit Customer</a>
+
+
+⸻
+
+✅ That’s it! Now:
+	•	Enter Customer ID → fetches & auto-fills data
+	•	You can edit fields
+	•	Click “Update” to save
+
+Let me know if you want to disable editing until the fetch is successful or show a loading spinner.
+
+
+////////
 view customer --Perfect! Based on your Spring Boot endpoint:
 
 GET /api/bank/customer/{customerId}
