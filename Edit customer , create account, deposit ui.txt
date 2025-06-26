@@ -1,3 +1,127 @@
+view customer --Perfect! Based on your Spring Boot endpoint:
+
+GET /api/bank/customer/{customerId}
+
+Let’s now create the View Customer Info functionality in Angular.
+
+⸻
+
+✅ 1. Add Route in app.routes.ts
+
+{
+  path: 'dashboard/view-customer-info',
+  component: ViewCustomerInfoComponent
+}
+
+
+⸻
+
+✅ 2. Update Dashboard Nav (dashboard.component.html)
+
+<nav>
+  <a routerLink="create-customer">Create Customer</a>
+  <a routerLink="view-customer-info">View Customer Info</a>
+</nav>
+
+
+⸻
+
+✅ 3. Generate Component
+
+ng generate component view-customer-info
+
+
+⸻
+
+✅ 4. view-customer-info.component.ts
+
+// src/app/view-customer-info/view-customer-info.component.ts
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-view-customer-info',
+  templateUrl: './view-customer-info.component.html'
+})
+export class ViewCustomerInfoComponent {
+  customerId: number | null = null;
+  customer: any = null;
+  message = '';
+
+  constructor(private http: HttpClient) {}
+
+  fetchCustomerInfo() {
+    if (this.customerId) {
+      this.http.get<any>(`http://localhost:8080/api/bank/customer/${this.customerId}`).subscribe({
+        next: (res) => {
+          this.customer = res;
+          this.message = '';
+        },
+        error: () => {
+          this.customer = null;
+          this.message = 'Customer not found.';
+        }
+      });
+    }
+  }
+}
+
+
+⸻
+
+✅ 5. view-customer-info.component.html
+
+<div class="container">
+  <h2>View Customer Info</h2>
+
+  <label for="customerId">Enter Customer ID:</label>
+  <input type="number" [(ngModel)]="customerId" name="customerId" />
+  <button (click)="fetchCustomerInfo()">Get Info</button>
+
+  <p *ngIf="message">{{ message }}</p>
+
+  <div *ngIf="customer">
+    <h3>Customer Details</h3>
+    <p><strong>Name:</strong> {{ customer.name }}</p>
+    <p><strong>Email:</strong> {{ customer.email }}</p>
+    <p><strong>Phone:</strong> {{ customer.phone }}</p>
+    <p><strong>Address:</strong> {{ customer.address }}</p>
+    <p><strong>Date of Birth:</strong> {{ customer.dob | date:'yyyy-MM-dd' }}</p>
+  </div>
+</div>
+
+
+⸻
+
+✅ 6. Make Sure to Import FormsModule
+
+In app.module.ts or your feature module:
+
+import { FormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [BrowserModule, FormsModule, ...],
+})
+
+
+⸻
+
+✅ Done! You now have a working View Customer Info screen.
+
+Let me know if you’d like to enhance this with:
+	•	auto-fetch using loginId
+	•	showing profile picture/avatar
+	•	edit button directly from here
+
+
+
+
+
+
+
+
+/////////////
+
 Great! Let’s now create the Edit Customer page in Angular 18 that sends a PUT request to your Spring Boot backend.
 
 ⸻
