@@ -1,3 +1,34 @@
+<div class="container">
+  <h2>Edit Customer</h2>
+
+  <!-- Customer ID input to fetch data -->
+  <label for="customerId">Enter Customer ID:</label>
+  <input type="number" [(ngModel)]="customerId" name="customerId" id="customerId" />
+  <button (click)="fetchCustomer()">Fetch</button>
+
+  <p *ngIf="message">{{ message }}</p>
+
+  <form *ngIf="name" (ngSubmit)="onUpdateCustomer()">
+    <label for="name">Name:</label>
+    <input type="text" [(ngModel)]="name" name="name" id="name" required />
+
+    <label for="email">Email:</label>
+    <input type="email" [(ngModel)]="email" name="email" id="email" required />
+
+    <label for="phone">Phone:</label>
+    <input type="text" [(ngModel)]="phone" name="phone" id="phone" />
+
+    <label for="address">Address:</label>
+    <input type="text" [(ngModel)]="address" name="address" id="address" />
+
+    <label for="dob">Date of Birth:</label>
+    <input type="date" [(ngModel)]="dob" name="dob" id="dob" />
+
+    <button type="submit">Update Customer</button>
+  </form>
+</div>
+
+/////////
 import { Component } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
