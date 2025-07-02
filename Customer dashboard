@@ -1025,3 +1025,294 @@ Would you also like to:
 	•	Export specific date range of transactions?
 
 Let me know!
+
+
+
+
+
+ui-----
+Perfect! Here’s clean, modern CSS for:
+	•	✅ customer-login
+	•	✅ customer-balance
+
+All follow the same design system as customer-dashboard and customer-transactions.
+
+⸻
+
+✅ customer-login.component.css
+
+.login-container {
+  max-width: 400px;
+  margin: 5rem auto;
+  padding: 2rem;
+  background-color: #f7f9fc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #2c3e50;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin: 0.5rem 0 0.2rem;
+  font-weight: 500;
+  color: #34495e;
+}
+
+input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+}
+
+button {
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
+
+
+⸻
+
+✅ customer-balance.component.css
+
+.balance-container {
+  max-width: 500px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.balance-box {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #27ae60;
+  padding: 1rem;
+  background-color: #eafaf1;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+button {
+  margin-top: 2rem;
+  padding: 10px 20px;
+  border: none;
+  background-color: #1abc9c;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #16a085;
+}
+
+
+⸻
+
+✅ How to Apply
+
+In each of your components, include the styleUrls like this:
+
+@Component({
+  selector: 'app-customer-login',
+  standalone: true,
+  imports: [...],
+  templateUrl: './customer-login.component.html',
+  styleUrls: ['./customer-login.component.css']
+})
+
+@Component({
+  selector: 'app-customer-balance',
+  standalone: true,
+  imports: [...],
+  templateUrl: './customer-balance.component.html',
+  styleUrls: ['./customer-balance.component.css']
+})
+
+
+⸻
+
+Would you like to:
+	•	Add a dark mode toggle?
+	•	Use Bootstrap or Angular Material for customer components?
+	•	Add a responsive navbar for customer dashboard?
+
+Let me know how else you’d like to enhance the UI!
+
+Great! Here’s some clean, responsive CSS to enhance your customer-dashboard and customer-transactions components. This will make your UI more modern and readable with a bit of styling.
+
+⸻
+
+✅ customer-dashboard.component.css
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem;
+  background-color: #f5f7fa;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h2, h3, h4 {
+  color: #2c3e50;
+}
+
+button {
+  margin: 8px 4px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  background-color: #3498db;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li button {
+  background-color: #2ecc71;
+}
+
+li button:hover {
+  background-color: #27ae60;
+}
+
+.logout-btn {
+  float: right;
+  background-color: #e74c3c;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}
+
+
+⸻
+
+✅ customer-transactions.component.css
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 2rem;
+  background-color: #fdfdfd;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.08);
+}
+
+h3 {
+  margin-bottom: 1rem;
+  color: #34495e;
+}
+
+button {
+  margin-bottom: 1rem;
+  padding: 10px 16px;
+  background-color: #1abc9c;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #16a085;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background-color: #ecf0f1;
+  color: #2c3e50;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+
+⸻
+
+✅ Usage
+
+Make sure to include the style file paths in your component declarations:
+
+@Component({
+  selector: 'app-customer-dashboard',
+  standalone: true,
+  imports: [...],
+  templateUrl: './customer-dashboard.component.html',
+  styleUrls: ['./customer-dashboard.component.css']
+})
+
+@Component({
+  selector: 'app-customer-transactions',
+  standalone: true,
+  imports: [...],
+  templateUrl: './customer-transactions.component.html',
+  styleUrls: ['./customer-transactions.component.css']
+})
+
+
+⸻
+
+Let me know if you’d like:
+	•	A Bootstrap version
+	•	A dark theme
+	•	Or additional styling for customer balance, login, etc.
