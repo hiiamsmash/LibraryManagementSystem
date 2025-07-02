@@ -697,7 +697,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-customer-dashboard',
   standalone: true,
-  imports: [CommonModule, HttpClient, RouterModule],
+  imports: [CommonModule, HttpClientModule, RouterModule],
   templateUrl: './customer-dashboard.component.html'
 })
 export class CustomerDashboardComponent implements OnInit {
