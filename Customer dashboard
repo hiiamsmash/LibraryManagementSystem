@@ -177,3 +177,142 @@ Part	Status
 ⸻
 
 Would you now like the Angular login page for the customer side, including customer-dashboard redirection on success?
+
+
+
+
+
+Great! Here’s the complete Angular setup for the Customer Login Page, storing the logged-in customer ID and redirecting to the customer-dashboard.
+
+⸻
+
+✅ 1. Generate Customer Login Component
+
+Run in terminal:
+
+ng generate component customer-login --standalone
+
+
+⸻
+
+✅ 2. customer-login.component.ts
+
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-customer-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './customer-login.component.html',
+})
+export class CustomerLoginComponent {
+  username = '';
+  password = '';
+  message = '';
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  onLogin() {
+    const url = 'http://localhost:8080/api/bank/customer/login';
+    const formData = new FormData();
+    formData.append('username', this.username);
+    formData.append('password', this.password);
+
+    this.http.post(url, formData, { responseType: 'text' }).subscribe({
+      next: (res: string) => {
+        const customerIdMatch = res.match(/Customer ID: (\d+)/);
+        if (customerIdMatch) {
+          const customerId = customerIdMatch[1];
+          sessionStorage.setItem('customerId', customerId);
+          this.router.navigate(['/customer-dashboard']);
+        } else {
+          this.message = 'Login failed!';
+        }
+      },
+      error: () => {
+        this.message = 'Login failed: Invalid credentials';
+      },
+    });
+  }
+}
+
+
+⸻
+
+✅ 3. customer-login.component.html
+
+<div class="container">
+  <h2>Customer Login</h2>
+  <form (ngSubmit)="onLogin()">
+    <label>Username:</label>
+    <input type="text" [(ngModel)]="username" name="username" required />
+
+    <label>Password:</label>
+    <input type="password" [(ngModel)]="password" name="password" required />
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p style="color: red;" *ngIf="message">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ 4. Create customer-dashboard Page
+
+ng generate component customer-dashboard --standalone
+
+customer-dashboard.component.ts
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-dashboard',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<h2>Welcome Customer!</h2><p>Customer ID: {{ customerId }}</p>`,
+})
+export class CustomerDashboardComponent {
+  customerId = sessionStorage.getItem('customerId');
+}
+
+
+⸻
+
+✅ 5. Add to app.routes.ts
+
+import { Routes } from '@angular/router';
+import { CustomerLoginComponent } from './customer-login/customer-login.component';
+import { CustomerDashboardComponent } from './customer-dashboard/customer-dashboard.component';
+
+export const routes: Routes = [
+  { path: 'customer-login', component: CustomerLoginComponent },
+  { path: 'customer-dashboard', component: CustomerDashboardComponent },
+];
+
+
+⸻
+
+✅ 6. Add Customer Login Link
+
+In your landing page or login selector page:
+
+<a routerLink="/customer-login">Customer Login</a>
+
+
+⸻
+
+✅ Result
+	•	Customers can now login from /customer-login
+	•	Customer ID is stored in sessionStorage
+	•	Redirected to /customer-dashboard
+
+⸻
+
+Would you like the customer to view personal info or accounts next inside this dashboard?
