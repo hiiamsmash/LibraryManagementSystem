@@ -7,3 +7,173 @@ CREATE TABLE intern_customer_login (
         REFERENCES intern_customer(customer_id)
         ON DELETE CASCADE
 );
+
+
+
+
+Perfect! Here’s the complete Spring Boot implementation for handling customer login:
+
+⸻
+
+✅ 1. Entity: CustomerLogin.java
+
+package com.oracle.bankapp.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "intern_customer_login")
+public class CustomerLogin {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long loginId;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @OneToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
+
+    // Getters and Setters
+    public Long getLoginId() {
+        return loginId;
+    }
+
+    public void setLoginId(Long loginId) {
+        this.loginId = loginId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+}
+
+
+⸻
+
+✅ 2. Repository: CustomerLoginRepository.java
+
+package com.oracle.bankapp.repository;
+
+import com.oracle.bankapp.model.CustomerLogin;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerLoginRepository extends JpaRepository<CustomerLogin, Long> {
+    CustomerLogin findByUsernameAndPassword(String username, String password);
+}
+
+
+⸻
+
+✅ 3. Service: Add to BankService.java
+
+package com.oracle.bankapp.service;
+
+import com.oracle.bankapp.model.Customer;
+import com.oracle.bankapp.model.CustomerLogin;
+import com.oracle.bankapp.repository.CustomerLoginRepository;
+import com.oracle.bankapp.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BankService {
+
+    @Autowired
+    private CustomerLoginRepository customerLoginRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    public CustomerLogin customerLogin(String username, String password) {
+        return customerLoginRepository.findByUsernameAndPassword(username, password);
+    }
+
+    public CustomerLogin registerCustomerLogin(Long customerId, String username, String password) {
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() ->
+            new IllegalArgumentException("Customer not found with ID: " + customerId)
+        );
+
+        CustomerLogin login = new CustomerLogin();
+        login.setUsername(username);
+        login.setPassword(password);
+        login.setCustomer(customer);
+        return customerLoginRepository.save(login);
+    }
+}
+
+
+⸻
+
+✅ 4. Controller: BankController.java
+
+// Inside your @RestController
+@PostMapping("/customer/login")
+public ResponseEntity<?> customerLogin(
+        @RequestParam String username,
+        @RequestParam String password) {
+
+    CustomerLogin login = bankService.customerLogin(username, password);
+
+    if (login != null) {
+        return ResponseEntity.ok("Login successful. Customer ID: " + login.getCustomer().getCustomerId());
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Login failed: Invalid credentials");
+    }
+}
+
+// Optional: Register customer login manually
+@PostMapping("/customer/register-login")
+public ResponseEntity<String> registerCustomerLogin(
+        @RequestParam Long customerId,
+        @RequestParam String username,
+        @RequestParam String password) {
+    try {
+        bankService.registerCustomerLogin(customerId, username, password);
+        return ResponseEntity.ok("Customer login registered successfully.");
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+    }
+}
+
+
+⸻
+
+✅ Summary
+
+Part	Status
+✅ Entity	CustomerLogin.java
+✅ Repository	CustomerLoginRepository.java
+✅ Service Logic	In BankService.java
+✅ Controller	Login + register endpoints
+
+
+⸻
+
+Would you now like the Angular login page for the customer side, including customer-dashboard redirection on success?
