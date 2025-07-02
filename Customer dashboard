@@ -316,3 +316,105 @@ In your landing page or login selector page:
 ⸻
 
 Would you like the customer to view personal info or accounts next inside this dashboard?
+
+
+
+
+Great! Here’s the complete Angular Customer Register Login UI that lets an admin register login credentials for a customer (i.e. create an entry in the intern_customer_login table).
+
+⸻
+
+✅ 1. Generate Component
+
+ng generate component register-customer-login --standalone
+
+
+⸻
+
+✅ 2. register-customer-login.component.ts
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-register-customer-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './register-customer-login.component.html',
+})
+export class RegisterCustomerLoginComponent {
+  customerId: number | null = null;
+  username = '';
+  password = '';
+  message = '';
+
+  constructor(private http: HttpClient) {}
+
+  onRegister() {
+    const formData = new FormData();
+    if (this.customerId !== null) {
+      formData.append('customerId', this.customerId.toString());
+      formData.append('username', this.username);
+      formData.append('password', this.password);
+
+      this.http.post('http://localhost:8080/api/bank/customer/register-login', formData, { responseType: 'text' })
+        .subscribe({
+          next: (res) => this.message = res,
+          error: (err) => this.message = err.error || 'Registration failed!'
+        });
+    } else {
+      this.message = 'Customer ID is required.';
+    }
+  }
+}
+
+
+⸻
+
+✅ 3. register-customer-login.component.html
+
+<div class="container">
+  <h2>Register Customer Login</h2>
+
+  <form (ngSubmit)="onRegister()">
+    <label for="customerId">Customer ID:</label>
+    <input type="number" id="customerId" [(ngModel)]="customerId" name="customerId" required />
+
+    <label for="username">Username:</label>
+    <input type="text" id="username" [(ngModel)]="username" name="username" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" [(ngModel)]="password" name="password" required />
+
+    <button type="submit">Register</button>
+  </form>
+
+  <p *ngIf="message">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ 4. Add to app.routes.ts or dashboard routes
+
+import { RegisterCustomerLoginComponent } from './register-customer-login/register-customer-login.component';
+
+export const routes: Routes = [
+  { path: 'register-customer-login', component: RegisterCustomerLoginComponent },
+  // other routes...
+];
+
+
+⸻
+
+✅ Optional: Add Link in Admin Dashboard
+
+<a routerLink="/register-customer-login">Register Customer Login</a>
+
+
+⸻
+
+This will let you register login credentials for any customer (after they’re created by the admin).
+Let me know if you’d like to show all customers in a dropdown or fetch customer names dynamically.
