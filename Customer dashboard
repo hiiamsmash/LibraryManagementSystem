@@ -874,3 +874,154 @@ Let me know if you’d like:
 	•	Add styling with Bootstrap or Angular Material
 
 Ready for those?
+
+
+
+
+
+
+
+
+
+
+
+Great! Since you already have csv-export.service.ts, you can reuse it for the customer’s transaction export.
+
+⸻
+
+✅ Step-by-Step to Export Customer Transactions as CSV
+
+✅ 1. Confirm/Update your csv-export.service.ts
+
+Here’s a working version to ensure the accountNumber appears properly in the CSV:
+
+src/app/service/csv-export.service.ts
+
+import { Injectable } from '@angular/core';
+import { saveAs } from 'file-saver';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CsvExportService {
+  exportToCsv(data: any[], filename: string) {
+    if (!data || !data.length) {
+      console.error('No data to export.');
+      return;
+    }
+
+    // Flatten and handle nested objects
+    const flattened = data.map(t => ({
+      accountNumber: t.account?.accountNumber ?? '',  // Fix for nested field
+      transactionType: t.transactionType,
+      amount: t.amount,
+      transactionDate: new Date(t.transactionDate).toLocaleString(),
+      referenceNo: t.referenceNo
+    }));
+
+    const headers = Object.keys(flattened[0]).join(',');
+    const csvRows = flattened.map(row =>
+      Object.values(row).map(val => `"${val}"`).join(',')
+    );
+
+    const csvContent = [headers, ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `${filename}.csv`);
+  }
+}
+
+
+⸻
+
+✅ 2. Update Customer Transactions Component
+
+Assuming you already have a working CustomerTransactionsComponent, update it with the export functionality.
+
+Add button and call exportToCsv():
+
+customer-transactions.component.html
+
+<h3>Transactions for Account #{{ accountNumber }}</h3>
+
+<button (click)="downloadCsv()">Download CSV</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Account</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Date</th>
+      <th>Reference No</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let t of transactions">
+      <td>{{ t.account?.accountNumber }}</td>
+      <td>{{ t.transactionType }}</td>
+      <td>{{ t.amount }}</td>
+      <td>{{ t.transactionDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+      <td>{{ t.referenceNo }}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+⸻
+
+customer-transactions.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { CsvExportService } from '../service/csv-export.service';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-transactions',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './customer-transactions.component.html'
+})
+export class CustomerTransactionsComponent implements OnInit {
+  accountNumber = '';
+  transactions: any[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private csvExportService: CsvExportService
+  ) {}
+
+  ngOnInit(): void {
+    this.accountNumber = this.route.snapshot.paramMap.get('accountNumber')!;
+    this.http.get<any[]>(`http://localhost:8080/api/bank/account/${this.accountNumber}/transactions`)
+      .subscribe({
+        next: (res) => this.transactions = res,
+        error: () => console.error('Failed to fetch transactions')
+      });
+  }
+
+  downloadCsv() {
+    this.csvExportService.exportToCsv(this.transactions, `transactions_${this.accountNumber}`);
+  }
+}
+
+
+⸻
+
+✅ Final Notes
+	•	✅ Account number now appears in CSV.
+	•	✅ You can reuse this same service for admin transaction export too.
+	•	✅ Make sure file-saver is installed:
+
+npm install file-saver
+npm install --save-dev @types/file-saver
+
+
+
+Would you also like to:
+	•	Add a CSV export for balance report?
+	•	Export specific date range of transactions?
+
+Let me know!
