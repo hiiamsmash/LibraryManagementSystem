@@ -1,1 +1,9 @@
-
+CREATE TABLE intern_customer_login (
+    login_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id NUMBER NOT NULL,
+    username VARCHAR2(50) UNIQUE NOT NULL,
+    password VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_customer_login FOREIGN KEY (customer_id)
+        REFERENCES intern_customer(customer_id)
+        ON DELETE CASCADE
+);
