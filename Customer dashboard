@@ -511,3 +511,152 @@ You can now use this in Angular to list account numbers with their types.
 	•	Show only balance summary
 
 Would you like to move on to GET balance and GET transactions next?
+
+
+
+
+
+
+
+
+
+
+
+Great! Here’s how to implement the enhanced customer dashboard in Angular:
+
+⸻
+
+✅ Overview of What We’ll Build
+
+When a customer logs in:
+	1.	✅ Show a welcome message: “Welcome, username”
+	2.	✅ Fetch and display all accounts for that customer
+	3.	✅ On account click → Show:
+	•	View Balance
+	•	View Transactions
+
+⸻
+
+✅ Backend API Assumptions
+
+You need two backend endpoints:
+	1.	Get customer by ID
+GET /api/bank/customer/{customerId}
+→ returns Customer object including username or name
+	2.	Get accounts for customer
+GET /api/bank/customer/{customerId}/accounts
+→ returns list of accounts (accountNumber, accountType, etc.)
+
+⸻
+
+✅ 1. Update customer-dashboard.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-dashboard',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './customer-dashboard.component.html',
+})
+export class CustomerDashboardComponent implements OnInit {
+  customerId = sessionStorage.getItem('customerId');
+  customerName = '';
+  accounts: any[] = [];
+  selectedAccount: any = null;
+  message = '';
+
+  constructor(private http: HttpClient, private router: Router) {
+    if (!this.customerId) {
+      this.router.navigate(['/customer-login']);
+    }
+  }
+
+  ngOnInit(): void {
+    this.fetchCustomerInfo();
+    this.fetchAccounts();
+  }
+
+  fetchCustomerInfo() {
+    this.http.get<any>(`http://localhost:8080/api/bank/customer/${this.customerId}`)
+      .subscribe({
+        next: (res) => this.customerName = res.name || res.username,
+        error: () => this.customerName = 'Customer'
+      });
+  }
+
+  fetchAccounts() {
+    this.http.get<any[]>(`http://localhost:8080/api/bank/customer/${this.customerId}/accounts`)
+      .subscribe({
+        next: (res) => this.accounts = res,
+        error: () => this.message = 'Failed to fetch accounts'
+      });
+  }
+
+  selectAccount(account: any) {
+    this.selectedAccount = account;
+  }
+
+  logout() {
+    sessionStorage.clear();
+    this.router.navigate(['/customer-login']);
+  }
+}
+
+
+⸻
+
+✅ 2. Update customer-dashboard.component.html
+
+<div class="container">
+  <h2>Welcome, {{ customerName }}</h2>
+
+  <button (click)="logout()" style="float: right;">Logout</button>
+
+  <h3>Your Accounts:</h3>
+  <ul *ngIf="accounts.length > 0; else noAccounts">
+    <li *ngFor="let acc of accounts">
+      <button (click)="selectAccount(acc)">
+        Account #{{ acc.accountNumber }} - {{ acc.accountType?.accountType || 'N/A' }}
+      </button>
+    </li>
+  </ul>
+  <ng-template #noAccounts>
+    <p>No accounts found for your profile.</p>
+  </ng-template>
+
+  <div *ngIf="selectedAccount" style="margin-top: 20px;">
+    <h4>Selected Account: {{ selectedAccount.accountNumber }}</h4>
+    <button [routerLink]="['/customer-balance', selectedAccount.accountNumber]">View Balance</button>
+    <button [routerLink]="['/customer-transactions', selectedAccount.accountNumber]">View Transactions</button>
+  </div>
+
+  <p *ngIf="message" style="color: red">{{ message }}</p>
+</div>
+
+
+⸻
+
+✅ 3. Add Routes in app.routes.ts
+
+Make sure you have these:
+
+{ path: 'customer-dashboard', component: CustomerDashboardComponent },
+{ path: 'customer-balance/:accountNumber', component: CustomerBalanceComponent },
+{ path: 'customer-transactions/:accountNumber', component: CustomerTransactionsComponent },
+
+(Assuming CustomerBalanceComponent and CustomerTransactionsComponent are created.)
+
+⸻
+
+✅ What’s Next?
+
+Would you like help implementing:
+	•	🔄 GET /customer/{customerId}/accounts backend?
+	•	📄 View Balance and Transactions components?
+	•	✅ Secure routing so customers can’t access dashboard unless logged in?
+
+Let me know what you want to add or build next.
