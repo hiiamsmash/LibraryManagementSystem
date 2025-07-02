@@ -660,3 +660,217 @@ Would you like help implementing:
 	•	✅ Secure routing so customers can’t access dashboard unless logged in?
 
 Let me know what you want to add or build next.
+
+
+
+
+
+
+
+
+
+Perfect! Let’s implement dynamic customer dashboard behavior as you described:
+
+⸻
+
+✅ What You Want:
+	1.	Customer logs in → sees list of their accounts
+	2.	Customer clicks on a particular account
+	3.	Then two buttons appear:
+	•	✅ View Balance → /customer-balance/:accountNumber
+	•	✅ View Transactions → /customer-transactions/:accountNumber
+	4.	These pages use the account number to fetch only that customer’s data
+
+⸻
+
+✅ How to Implement This in Angular
+
+✅ 1. Customer Dashboard Component (Updated)
+
+customer-dashboard.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-dashboard',
+  standalone: true,
+  imports: [CommonModule, HttpClient, RouterModule],
+  templateUrl: './customer-dashboard.component.html'
+})
+export class CustomerDashboardComponent implements OnInit {
+  customerId = sessionStorage.getItem('customerId');
+  customerName = '';
+  accounts: any[] = [];
+  selectedAccount: any = null;
+
+  constructor(private http: HttpClient, private router: Router) {
+    if (!this.customerId) this.router.navigate(['/customer-login']);
+  }
+
+  ngOnInit(): void {
+    this.fetchCustomerInfo();
+    this.fetchAccounts();
+  }
+
+  fetchCustomerInfo() {
+    this.http.get<any>(`http://localhost:8080/api/bank/customer/${this.customerId}`)
+      .subscribe({
+        next: (res) => this.customerName = res.name || res.username,
+        error: () => this.customerName = 'Customer'
+      });
+  }
+
+  fetchAccounts() {
+    this.http.get<any[]>(`http://localhost:8080/api/bank/customer/${this.customerId}/accounts`)
+      .subscribe({
+        next: (res) => this.accounts = res,
+        error: () => console.error('Failed to fetch accounts')
+      });
+  }
+
+  selectAccount(account: any) {
+    this.selectedAccount = account;
+  }
+
+  logout() {
+    sessionStorage.clear();
+    this.router.navigate(['/customer-login']);
+  }
+}
+
+
+⸻
+
+customer-dashboard.component.html
+
+<div class="container">
+  <h2>Welcome, {{ customerName }}</h2>
+
+  <button (click)="logout()" style="float: right;">Logout</button>
+
+  <h3>Your Accounts:</h3>
+  <ul *ngIf="accounts.length > 0">
+    <li *ngFor="let acc of accounts">
+      <button (click)="selectAccount(acc)">
+        Account #{{ acc.accountNumber }} - {{ acc.accountType?.accountType || 'N/A' }}
+      </button>
+    </li>
+  </ul>
+
+  <div *ngIf="selectedAccount" style="margin-top: 20px;">
+    <h4>Selected Account: {{ selectedAccount.accountNumber }}</h4>
+    <button [routerLink]="['/customer-balance', selectedAccount.accountNumber]">View Balance</button>
+    <button [routerLink]="['/customer-transactions', selectedAccount.accountNumber]">View Transactions</button>
+  </div>
+</div>
+
+
+⸻
+
+✅ 2. Route Setup in app.routes.ts
+
+{
+  path: 'customer-dashboard',
+  component: CustomerDashboardComponent
+},
+{
+  path: 'customer-balance/:accountNumber',
+  component: CustomerBalanceComponent // You should create this
+},
+{
+  path: 'customer-transactions/:accountNumber',
+  component: CustomerTransactionsComponent // You should create this
+}
+
+
+⸻
+
+✅ 3. Example CustomerBalanceComponent
+
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-balance',
+  standalone: true,
+  imports: [CommonModule],
+  template: `<h3>Account #{{ accountNumber }} - Balance: {{ balance }}</h3>`
+})
+export class CustomerBalanceComponent implements OnInit {
+  accountNumber = '';
+  balance = '';
+
+  constructor(private route: ActivatedRoute, private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.accountNumber = this.route.snapshot.paramMap.get('accountNumber')!;
+    this.http.get(`http://localhost:8080/api/bank/accounts/${this.accountNumber}/balance`, { responseType: 'text' })
+      .subscribe({
+        next: (res) => this.balance = res,
+        error: () => this.balance = 'Error fetching balance'
+      });
+  }
+}
+
+
+⸻
+
+✅ 4. Example CustomerTransactionsComponent
+
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-customer-transactions',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <h3>Transactions for Account #{{ accountNumber }}</h3>
+    <table>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Reference</th>
+      </tr>
+      <tr *ngFor="let t of transactions">
+        <td>{{ t.transactionDate | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+        <td>{{ t.transactionType }}</td>
+        <td>{{ t.amount }}</td>
+        <td>{{ t.referenceNo }}</td>
+      </tr>
+    </table>
+  `
+})
+export class CustomerTransactionsComponent implements OnInit {
+  accountNumber = '';
+  transactions: any[] = [];
+
+  constructor(private route: ActivatedRoute, private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.accountNumber = this.route.snapshot.paramMap.get('accountNumber')!;
+    this.http.get<any[]>(`http://localhost:8080/api/bank/account/${this.accountNumber}/transactions`)
+      .subscribe({
+        next: (res) => this.transactions = res,
+        error: () => console.error('Failed to fetch transactions')
+      });
+  }
+}
+
+
+⸻
+
+Let me know if you’d like:
+	•	Customer to export transactions to CSV
+	•	Pagination for transaction history
+	•	Add styling with Bootstrap or Angular Material
+
+Ready for those?
