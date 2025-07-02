@@ -1,5 +1,5 @@
 CREATE TABLE intern_customer_login (
-    login_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    login_id NUMBER  PRIMARY KEY,
     customer_id NUMBER NOT NULL,
     username VARCHAR2(50) UNIQUE NOT NULL,
     password VARCHAR2(50) NOT NULL,
@@ -26,7 +26,7 @@ import jakarta.persistence.*;
 public class CustomerLogin {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long loginId;
 
     @Column(nullable = false, unique = true)
@@ -418,3 +418,96 @@ export const routes: Routes = [
 
 This will let you register login credentials for any customer (after they’re created by the admin).
 Let me know if you’d like to show all customers in a dropdown or fetch customer names dynamically.
+
+
+
+
+
+
+
+
+
+
+Perfect! Here’s how to implement the backend Spring Boot endpoint:
+👉 GET /api/bank/customer/{customerId}/accounts
+which returns all accounts belonging to a specific customer.
+
+⸻
+
+✅ Step-by-Step Backend Code
+
+✅ 1. Create the Endpoint in Controller
+
+// BankController.java
+@GetMapping("/customer/{customerId}/accounts")
+public ResponseEntity<List<Account>> getAccountsByCustomer(@PathVariable Long customerId) {
+    try {
+        List<Account> accounts = bankService.getAccountsByCustomer(customerId);
+        return ResponseEntity.ok(accounts);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.emptyList());
+    }
+}
+
+
+⸻
+
+✅ 2. Add Service Method
+
+// BankService.java
+public List<Account> getAccountsByCustomer(Long customerId) {
+    Customer customer = customerRepository.findById(customerId).orElseThrow(() ->
+        new RuntimeException("Customer not found"));
+
+    return accountRepository.findByCustomer(customer);
+}
+
+
+⸻
+
+✅ 3. Add Repository Method
+
+// AccountRepository.java
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    List<Account> findByCustomer(Customer customer);
+}
+
+
+⸻
+
+✅ 4. Example JSON Response
+
+When a customer with 2 accounts logs in, this endpoint will return:
+
+[
+  {
+    "accountId": 1,
+    "accountNumber": 100001,
+    "balance": 5000.0,
+    "accountType": {
+      "accountTypeId": 1,
+      "accountType": "Savings"
+    }
+  },
+  {
+    "accountId": 2,
+    "accountNumber": 100002,
+    "balance": 15000.0,
+    "accountType": {
+      "accountTypeId": 2,
+      "accountType": "Current"
+    }
+  }
+]
+
+You can now use this in Angular to list account numbers with their types.
+
+⸻
+
+✅ Done! Let me know if you want to:
+	•	Restrict to active accounts only
+	•	Return only minimal fields (DTO)
+	•	Show only balance summary
+
+Would you like to move on to GET balance and GET transactions next?
