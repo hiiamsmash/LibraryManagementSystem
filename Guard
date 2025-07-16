@@ -1,0 +1,253 @@
+You’re absolutely right to address this. What you need is route guarding in Angular — to prevent access to admin/customer dashboards unless the user is logged in.
+
+⸻
+
+✅ Solution: Use Angular Route Guards
+
+You’ll create a guard that:
+	•	Checks if a user is logged in.
+	•	If not, redirects to the login page.
+
+⸻
+
+✅ Step 1: Create AuthService
+
+If you haven’t already, create an auth.service.ts to track login status.
+
+src/app/service/auth.service.ts
+
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  constructor(private router: Router) {}
+
+  // Store login role and ID in sessionStorage
+  login(role: 'admin' | 'customer', loginId: number) {
+    sessionStorage.setItem('isLoggedIn', 'true');
+    sessionStorage.setItem('role', role);
+    sessionStorage.setItem('loginId', loginId.toString());
+  }
+
+  logout() {
+    sessionStorage.clear();
+    this.router.navigate(['/login']);
+  }
+
+  isLoggedIn(): boolean {
+    return sessionStorage.getItem('isLoggedIn') === 'true';
+  }
+
+  getRole(): string | null {
+    return sessionStorage.getItem('role');
+  }
+
+  getLoginId(): number | null {
+    const id = sessionStorage.getItem('loginId');
+    return id ? +id : null;
+  }
+}
+
+
+⸻
+
+✅ Step 2: Create Route Guards
+
+Generate two route guards:
+
+ng generate guard guards/admin-auth
+ng generate guard guards/customer-auth
+
+src/app/guards/admin-auth.guard.ts
+
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from '../service/auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AdminAuthGuard implements CanActivate {
+  constructor(private auth: AuthService, private router: Router) {}
+
+  canActivate(): boolean {
+    if (this.auth.isLoggedIn() && this.auth.getRole() === 'admin') {
+      return true;
+    }
+    this.router.navigate(['/login']);
+    return false;
+  }
+}
+
+src/app/guards/customer-auth.guard.ts
+
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from '../service/auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CustomerAuthGuard implements CanActivate {
+  constructor(private auth: AuthService, private router: Router) {}
+
+  canActivate(): boolean {
+    if (this.auth.isLoggedIn() && this.auth.getRole() === 'customer') {
+      return true;
+    }
+    this.router.navigate(['/customer-login']);
+    return false;
+  }
+}
+
+
+⸻
+
+✅ Step 3: Use Guards in app.routes.ts
+
+Update your route definitions like:
+
+import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { CustomerAuthGuard } from './guards/customer-auth.guard';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+
+  // Admin
+  { path: 'login', component: AdminLoginComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AdminAuthGuard] },
+  // Add guards to other admin routes if needed
+
+  // Customer
+  { path: 'customer-login', component: CustomerLoginComponent },
+  { path: 'customer-dashboard', component: CustomerDashboardComponent, canActivate: [CustomerAuthGuard] },
+  { path: 'customer-balance/:accountNumber', component: CustomerBalanceComponent, canActivate: [CustomerAuthGuard] },
+  { path: 'customer-transactions/:accountNumber', component: CustomerTransactionsComponent, canActivate: [CustomerAuthGuard] },
+];
+
+
+⸻
+
+✅ Step 4: Store Role + Login ID on Login
+
+In your login component:
+
+this.authService.login('admin', loginId); // or 'customer'
+
+And for logout:
+
+this.authService.logout();
+
+
+⸻
+
+✅ Now Secured
+	•	Users can’t access dashboard URLs directly.
+	•	Must log in first.
+	•	If not logged in → redirected to correct login page.
+
+⸻
+
+Let me know if you want:
+	•	Session timeout (auto logout)
+	•	“Remember me” using localStorage
+	•	Guarding child routes or lazy loading
+
+Happy to help you fully secure your app!
+
+
+
+
+Great question!
+
+In Step 4, you need to call this.authService.login(...) in your login components — both for admin login and customer login, after a successful login response from the backend.
+
+⸻
+
+✅ Where to put Step 4 Code
+
+✅ 1. Admin Login Component
+
+In your admin-login.component.ts (or just login.component.ts if that’s what you’re using):
+
+Example:
+
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../service/auth.service';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [...],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username = '';
+  password = '';
+
+  constructor(private http: HttpClient, private router: Router, private authService: AuthService) {}
+
+  onLogin() {
+    const formData = new FormData();
+    formData.append('username', this.username);
+    formData.append('password', this.password);
+
+    this.http.post('http://localhost:8080/api/bank/login', formData, { responseType: 'text' })
+      .subscribe({
+        next: (res) => {
+          console.log('Login successful:', res);
+
+          // ✅ Extract loginId from backend if available (you can enhance backend to send it)
+          const loginId = 1; // Replace with actual loginId if returned
+          this.authService.login('admin', loginId);  // ✅ Step 4 code
+
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          alert('Login failed: ' + err.error);
+        }
+      });
+  }
+}
+
+
+⸻
+
+✅ 2. Customer Login Component
+
+In customer-login.component.ts:
+
+this.http.post('http://localhost:8080/api/customer-login', formData, { responseType: 'text' })
+  .subscribe({
+    next: (res) => {
+      console.log('Customer login successful:', res);
+
+      const loginId = 5; // Replace with actual loginId
+      this.authService.login('customer', loginId);  // ✅ Step 4 code
+
+      this.router.navigate(['/customer-dashboard']);
+    },
+    error: (err) => {
+      alert('Login failed: ' + err.error);
+    }
+  });
+
+
+⸻
+
+✅ In Summary
+
+Put this.authService.login('admin' | 'customer', loginId):
+	•	Inside the .subscribe({ next }) block
+	•	After a successful login
+	•	Replace loginId with actual ID (ideally returned from backend)
+
+⸻
+
+Let me know if you’d like help modifying the backend to return login ID after login, or if you want to store extra info like username too.
