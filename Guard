@@ -1,3 +1,4 @@
+https://bnpparibas.emsigner.com/Areas/AdhocLogin/Signing?x=T%2fAyC9zi7YZOCnOQqPn60A%3d%3d&sfId=vV5SVo1XKGxgfjhz3gTSJA%3d%3d
 https://bnpparibas.emsigner.com/Areas/AdhocLogin/SerialSigning
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
