@@ -1,0 +1,49 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+import os
+
+# ===== 1. Set download directory =====
+download_dir = os.path.abspath("downloads")   # folder in your project
+
+options = webdriver.ChromeOptions()
+prefs = {
+    "download.default_directory": download_dir,     # set default download folder
+    "download.prompt_for_download": False,          # auto-download
+    "download.directory_upgrade": True,
+    "safebrowsing.enabled": True
+}
+options.add_experimental_option("prefs", prefs)
+
+# ===== 2. Launch browser =====
+driver = webdriver.Chrome(options=options)
+driver.get("https://example.com")   # change to your site
+time.sleep(2)
+
+# ===== 3. Click on another link =====
+link = driver.find_element(By.LINK_TEXT, "Go to Page")   # adjust locator
+link.click()
+time.sleep(2)
+
+# ===== 4. Click on 3 radio buttons =====
+radio1 = driver.find_element(By.ID, "radio1")   # adjust locator
+radio1.click()
+time.sleep(1)
+
+radio2 = driver.find_element(By.ID, "radio2")   # adjust locator
+radio2.click()
+time.sleep(1)
+
+radio3 = driver.find_element(By.ID, "radio3")   # adjust locator
+radio3.click()
+time.sleep(1)
+
+# ===== 5. Click the download button =====
+download_button = driver.find_element(By.ID, "download-btn")   # adjust locator
+download_button.click()
+
+# ===== 6. Wait for download to complete =====
+time.sleep(10)
+
+driver.quit()
+print("✅ File downloaded to:", download_dir)
