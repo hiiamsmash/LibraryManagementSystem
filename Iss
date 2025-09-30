@@ -1,0 +1,277 @@
+Got it 👍 This SQL looks like part of a large Oracle query with multiple joins between tables/views inside a &DATAWAREHOUSE& schema. I’ll explain it line by line, so you can see how each join/condition works and what it’s trying to achieve.
+
+⸻
+
+FROM clause
+
+FROM
+&DATAWAREHOUSE&.VB35M1,
+&DATAWAREHOUSE&.VB35T1 VB35T1_CONTREPARTIE,
+&DATAWAREHOUSE&.VBR321,
+&DATAWAREHOUSE&.VBR201,
+&DATAWAREHOUSE&.VB0541,
+&DATAWAREHOUSE&.VB0541 VB0541_REP,
+/*VBR9F1,*/
+&DATAWAREHOUSE&.VBR2I1,
+/*vbr9e1,*/
+&DATAWAREHOUSE&.VB35M1 VB35M1_CONTRAT,
+&DATAWAREHOUSE&.VBR341,
+&DATAWAREHOUSE&.VBR311,
+&DATAWAREHOUSE&.VB35D1,
+&DATAWAREHOUSE&.VA2011,
+&DATAWAREHOUSE&.VBR9K1,
+&DATAWAREHOUSE&.VB35T1 VB35T1_EMETTEUR,
+&DATAWAREHOUSE&.VB35T1 VB35T1_GARANT, 
+&DATAWAREHOUSE&.VBR221,
+&DATAWAREHOUSE&.VBR401,
+&DATAWAREHOUSE&.VBR4G1,
+&DATAWAREHOUSE&.VBR211,
+&DATAWAREHOUSE&.VA0131,
+&DATAWAREHOUSE&.VA3281,
+&DATAWAREHOUSE&.VA5131,
+&DATAWAREHOUSE&.VT5021 VT5021_CONTRAT,
+&DATAWAREHOUSE&.VB3911,
+&DATAWAREHOUSE&.VB09M1
+
+👉 This lists all tables/views used in the query.
+Notice some are repeated with aliases:
+	•	VB35T1 is aliased as VB35T1_CONTREPARTIE, VB35T1_EMETTEUR, VB35T1_GARANT (same base table, but joined in different roles: counterparty, issuer, guarantor).
+	•	VB0541 is aliased as VB0541_REP (same table, different purpose).
+	•	VB35M1 is aliased as VB35M1_CONTRAT.
+
+⸻
+
+WHERE clause
+
+Now the join conditions and filters:
+	1.	
+
+
+
+
+
+(VB35M1.38049B = VBR201.J80498)
+
+- Links **VB35M1** table with **VBR201** using columns `38049B` and `J80498`.
+
+---
+
+2. ```sql
+VBR201.38049L = VBR221.38049L
+
+	•	Joins VBR201 and VBR221 on 38049L.
+
+⸻
+
+	3.	
+
+
+
+
+
+VBR201.J8049S = VBR311.J8049S(+)
+
+- Outer join (`(+)`) → include rows from **VBR201** even if there’s no match in **VBR311**.
+
+---
+
+4. ```sql
+VBR201.A0020 = VB0541.A0020 
+AND VBR201.A0230 = VB0541.A0230 
+AND VBR201.A0460 = VB0541.A0830 
+AND VB0541.A0540 = 1
+
+	•	Complex join to VB0541, also filtering A0540 = 1.
+
+⸻
+
+	5.	
+
+
+
+
+
+VBR201.A0460 = VB35D1.J8050
+
+- Links **VBR201** and **VB35D1**.
+
+---
+
+6. ```sql
+VBR211.J8049K = VBR201.J8049K
+
+	•	Joins VBR211 with VBR201.
+
+⸻
+
+	7.	
+
+
+
+
+
+VB35T1_CONTREPARTIE.J8049A = VBR201.1049AB
+VB35T1_EMETTEUR.J8049A = VBR201.1049AA
+VB35T1_GARANT.J8049A = VBR201.I049AD
+
+- All three roles of **VB35T1** (counterparty, issuer, guarantor) join with different foreign keys in **VBR201**.
+
+---
+
+8. ```sql
+VB35M1_CONTRAT.J8049B = VBR201.I049AC
+
+	•	Links contract alias of VB35M1 with VBR201.
+
+⸻
+
+	9.	
+
+
+
+
+
+VBR201.I049AE = VBR321.I049AE
+
+- Join with **VBR321**.
+
+---
+
+10. ```sql
+VBR201.A0020 = VB0541_REP.A0020 
+AND VBR201.A230ZQ = VB0541_REP.A0230 
+AND VBR201.A0460 = VB0541_REP.A0830 
+AND VB0541_REP.A0540 = 1
+
+	•	Similar join to VB0541_REP with a filter.
+
+⸻
+
+	11.	
+
+
+
+
+
+VBR2I1.I049AQ(+) = VBR201.I049AE
+AND VBR2I1.A0460(+) = VBR201.A0460
+
+- Outer join with **VBR2I1**.
+
+---
+
+12. ```sql
+VA2011.A0020(+) = VB35T1_CONTREPARTIE.A00201 
+AND VA2011.A1220(+) = VB35T1_CONTREPARTIE.A1220
+
+	•	Outer join VA2011 with counterparty info.
+
+⸻
+
+	13.	
+
+
+
+
+
+VBR201.I049AP = VBR341.I049AP
+
+- Joins **VBR201** with **VBR341**.
+
+---
+
+14. ```sql
+VB35M1_CONTRAT.J8049B = VBR9K1.J8049B(+) 
+AND VBR9K1.J8045(+) = '0'
+
+	•	Outer join with VBR9K1 but only if J8045 = '0'.
+
+⸻
+
+	15.	
+
+
+
+
+
+VBR4G1.I049CA = VBR401.I049CA(+)
+AND VBR201.I049AB = VBR4G1.J8049A(+)
+AND VBR201.A0460 = VBR4G1.A0460(+)
+
+- Outer join between **VBR201, VBR4G1, VBR401**.
+
+---
+
+16. ```sql
+VA0131.A0110(+) = VB35M1.A0110F
+
+	•	Outer join with VA0131.
+
+⸻
+
+	17.	
+
+
+
+
+
+TRIM(VB35M1.A7390Q) = TRIM(VA3281.A7390Q(+))
+
+- Outer join with **VA3281**, ignoring leading/trailing spaces.
+
+---
+
+18. ```sql
+VB35D1.J8050 = (SELECT c81001 FROM &DATAWAREHOUSE&.vdf311)
+
+	•	Filter: VB35D1.J8050 must equal a value from subquery (single value c81001 from table vdf311).
+
+⸻
+
+✅ So in short:
+	•	VBR201 is the central table.
+	•	It joins to VB35M1, VB0541, VB35T1, VB35D1, VBR221, VBR311, VBR341, VBR321, VBR211, VBR401, VBR4G1, VA2011, VA0131, VA3281, VBR9K1.
+	•	Outer joins ((+)) are used where related info may be missing but shouldn’t exclude the main record.
+	•	A final filter restricts results using vdf311.
+
+⸻
+
+👉 Do you want me to also draw the data flow diagram (like which table connects to which) so it’s easier to visualize, or just keep it in text form?
+
+
+
+VBR201 (Transactions)
+   → VB35M1 / VB35D1 (Contracts, filtered by VDF311)
+   → VB35T1 (Parties: Counterparty, Issuer, Guarantor → enriched by VA2011)
+   → VBR221 / VBR311 / VBR321 / VBR341 / VBR211 (Reference Codes)
+   → VB0541 / VB0541_REP (Account & Participant Master)
+   → VBR9K1 / VBR4G1 + VBR401 / VA0131 / VA3281 / VBR2I1 (Extra Attributes)
+   → ✅ Final Output: Complete Enriched Contract Record
+
+
+
+ VDF311(Filter)
+        |
+        v
+   VB35M1 + VB35D1 (Contracts)
+        |
+        v
+     VBR201 (Main Transactions)
+        |
+        +--> VBR221 / VBR311 / VBR321 / VBR341 / VBR211 (Reference Codes)
+        |
+        +--> VB35T1 (Counterparty / Issuer / Guarantor) --> VA2011 (Extra Party Info)
+        |
+        +--> VB0541 / VB0541_REP (Accounts & Reps)
+        |
+        +--> VBR9K1 / VBR4G1 → VBR401 (Contract / Guarantee Links)
+        |
+        +--> VA0131 / VA3281 / VBR2I1 (Attributes)
+        |
+        v
+   FINAL ENRICHED OUTPUT
+
+
+
+
+
