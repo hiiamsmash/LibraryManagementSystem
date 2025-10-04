@@ -1,3 +1,41 @@
+Sub SplitWorkbook()
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim rng As Range
+    Dim rowCount As Long
+    Dim i As Long, partNo As Integer
+    Dim header As Range
+    Dim newWb As Workbook
+    Dim destSheet As Worksheet
+
+    Set ws = ActiveSheet
+    rowCount = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    Set header = ws.Rows(1)
+    partNo = 1
+
+    For i = 2 To rowCount Step 1000
+        Set newWb = Workbooks.Add
+        Set destSheet = newWb.Sheets(1)
+
+        header.Copy destSheet.Rows(1)
+        ws.Rows(i & ":" & Application.Min(i + 999, rowCount)).Copy destSheet.Rows(2)
+
+        newWb.SaveAs Filename:=ThisWorkbook.Path & "\Part" & partNo & ".xlsx"
+        newWb.Close SaveChanges:=False
+        partNo = partNo + 1
+    Next i
+
+    MsgBox "Done! Files created in same folder as original workbook."
+End Sub
+
+
+
+
+
+
+
+
+
 import pandas as pd
 
 # --- Configuration ---
