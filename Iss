@@ -1,3 +1,38 @@
+import pandas as pd
+
+# --- Configuration ---
+input_file = "your_large_file.xlsx"  # Replace with your Excel file name
+output_prefix = "part_"              # Prefix for output files
+chunk_size = 1000                    # Number of rows per file
+
+# --- Read Excel file ---
+print("Reading Excel file...")
+df = pd.read_excel(input_file)
+
+# --- Split into chunks ---
+total_rows = len(df)
+num_parts = (total_rows // chunk_size) + (1 if total_rows % chunk_size else 0)
+print(f"Total rows: {total_rows}, creating {num_parts} files...")
+
+for i in range(num_parts):
+    start_row = i * chunk_size
+    end_row = start_row + chunk_size
+    chunk = df.iloc[start_row:end_row]
+    output_file = f"{output_prefix}{i+1}.xlsx"
+    chunk.to_excel(output_file, index=False)
+    print(f"✅ Saved {output_file} ({len(chunk)} rows)")
+
+print("All parts created successfully!")
+
+
+
+
+
+
+
+
+
+
 Got it 👍 This SQL looks like part of a large Oracle query with multiple joins between tables/views inside a &DATAWAREHOUSE& schema. I’ll explain it line by line, so you can see how each join/condition works and what it’s trying to achieve.
 
 ⸻
